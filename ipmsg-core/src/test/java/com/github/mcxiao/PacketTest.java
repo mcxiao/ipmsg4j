@@ -27,6 +27,8 @@ public class PacketTest {
 
     byte[] result = new byte[]{49, 58, 49, 48, 48, 48, 58, 115, 101, 110, 100, 101, 114, 78, 97, 109, 101, 58, 115,
             101, 110, 100, 101, 114, 72, 111, 115, 116, 58, 49, 58, 0, 1};
+    byte[] result2 = new byte[]{49, 58, 49, 48, 48, 48, 58, 115, 101, 110, 100, 101, 114, 78, 97, 109, 101, 58, 115,
+            101, 110, 100, 101, 114, 72, 111, 115, 116, 58, 49, 58};
 
     String version = "1";
     String packetNo = "1000";
@@ -41,8 +43,10 @@ public class PacketTest {
         Packet packet = new Packet(version, packetNo,
                 new Command(command),
                 new HostSub(senderName, senderHost));
-        packet.setMsgBuf(msgBuf);
         byte[] bytes = packet.toBytes();
+        Assert.assertArrayEquals(result2, bytes);
+        packet.setMsgBuf(msgBuf);
+        bytes = packet.toBytes();
 
         Assert.assertArrayEquals(result, bytes);
     }

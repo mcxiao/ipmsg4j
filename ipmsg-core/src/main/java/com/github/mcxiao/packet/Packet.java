@@ -54,12 +54,20 @@ public class Packet implements Element {
         // XXX 避免多次 array copy
         String bufString = String.format(PacketParseUtil.FORMATTER, version, packetNo,
                 hostSub.getSenderName(), hostSub.getSenderHost(), command.getCommand());
+        System.out.println(bufString);
         byte[] buf = bufString.getBytes();
-        msgBuf = msgBuf == null ? new byte[] {IPMsgProtocol.EOL_BYTE} : msgBuf;
+        if (msgBuf == null) {
+            msgBuf = new byte[0];
+        }
+//        msgBuf = msgBuf == null ? new byte[] {IPMsgProtocol.EOL_BYTE} : msgBuf;
+
         byte[] bytes = new byte[buf.length + msgBuf.length];
 
         System.arraycopy(buf, 0, bytes, 0, buf.length);
         System.arraycopy(msgBuf, 0, bytes, buf.length, msgBuf.length);
+
+        // Add the eol byte
+//        bytes[bytes.length - 1] = IPMsgProtocol.EOL_BYTE;
 
         return bytes;
     }
@@ -115,4 +123,5 @@ public class Packet implements Element {
     public int getPort() {
         return this.port;
     }
+
 }

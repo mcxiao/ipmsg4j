@@ -23,20 +23,38 @@ import com.github.mcxiao.packet.Packet;
  */
 public interface IPMsgConnection {
 
-    String getHostName();
+    String getSenderHost();
 
-    String getUser();
+    String getSenderName();
+
+    String getLocalhostAddress();
 
     int getPort();
 
     void sendPacket(Packet packet) throws NoResponseException, InterruptedException, IPMsgException.ClientUnavailableException;
 
-    void addPacketListener(PacketListener listener);
+    void addPacketListener(PacketListener listener, PacketFilter filter);
 
-    void removePacketListener(PacketListener listener);
+    boolean removePacketListener(PacketListener listener);
+    
+    void addAsyncPacketListener(PacketListener listener, PacketFilter filter);
+    
+    boolean removeAsyncPacketListener(PacketListener listener);
+    
+    void addSyncPacketListener(PacketListener listener, PacketFilter filter);
+    
+    boolean removeSyncPacketListener(PacketListener listener);
+    
+    void addPacketSendingListener(PacketListener listener, PacketFilter filter);
+    
+    void removePacketSendingListener(PacketListener listener);
+    
+    void addPacketInterceptor(PacketListener interceptor, PacketFilter filter);
 
-    void addPacketInterceptor(PacketInterceptor interceptor);
+    boolean removePacketInterceptor(PacketListener interceptor);
 
-    void removePacketInterceptor(PacketInterceptor interceptor);
+    void addConnectionListener(ConnectionListener listener);
+
+    void removeConnectionListener(ConnectionListener listener);
 
 }

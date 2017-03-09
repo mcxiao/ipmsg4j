@@ -1,19 +1,21 @@
 package com.github.mcxiao;
 
 import com.github.mcxiao.IPMsgException.ClientUnavailableException;
+import com.github.mcxiao.IPMsgException.ConnectException;
+import com.github.mcxiao.IPMsgException.NoResponseException;
+import com.github.mcxiao.packet.Command;
+import com.github.mcxiao.packet.HostSub;
 import com.github.mcxiao.packet.Packet;
 import com.github.mcxiao.util.LogUtil;
-import com.github.mcxiao.util.PacketParseUtil;
 import com.github.mcxiao.util.StringUtil;
 import com.github.mcxiao.util.cache.memory.impl.LruINetAddressMemoryCache;
+import com.oracle.tools.packager.Log;
+
 import org.jivesoftware.smack.util.ArrayBlockingQueueWithShutdown;
 import org.jivesoftware.smack.util.Async;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 
 /**
  */
@@ -33,9 +35,30 @@ public class IPMsgTCPConnection extends AbstractConnection {
     private DatagramPacketReader datagramReader;
     private DatagramPacketWriter datagramWriter;
 
-    protected IPMsgTCPConnection(IPMsgConfiguration configuration) {
+    public IPMsgTCPConnection(IPMsgConfiguration configuration) {
         super(configuration);
         this.config = configuration;
+    }
+
+    @Override
+    protected void connectionInternal() throws ConnectException, ClientUnavailableException, InterruptedException, NoResponseException {
+        // Initialize connection and setup the reader and writer.
+        connectUsingConfiguration();
+
+        // Sockets setup successfully.
+        initConnection();
+
+        // XXX Broadcast available packets
+        Command command = new Command(IPMsgProtocol.IPMSG_BR_ENTRY);
+        Packet packet = new Packet(IPMsgProperties.VERSION_STRING, String.valueOf(0), command, new HostSub(getSenderName(), getSenderHost()));
+        packet.setTo("255.255.255.255");
+        packet.setFrom(getLocalhostAddress());
+        sendPacket(packet);
+    }
+
+    @Override
+    protected void shutdown() {
+        shutdown(false);
     }
 
     @Override
@@ -50,12 +73,49 @@ public class IPMsgTCPConnection extends AbstractConnection {
         datagramWriter.sendPacketEnvelope(packetEnvelope);
     }
 
+    private void connectUsingConfiguration() throws ConnectException {
+        try {
+            // XXX: 2017/3/7 Is there both setBroadcast(true)?
+            readerSocket = new DatagramSocket(getPort());
+            readerSocket.setBroadcast(true);
+            writerSocket = new DatagramSocket();
+            writerSocket.setBroadcast(true);
+        } catch (SocketException e) {
+            throw new ConnectException("Can't create DatagramSocket.", e);
+        }
+    }
+
     private void initConnection() {
+        boolean isFirstInitialization = datagramReader == null || datagramWriter == null;
+
+        if (isFirstInitialization) {
+            datagramReader = new DatagramPacketReader();
+            datagramWriter = new DatagramPacketWriter();
+        }
+
+        datagramReader.init(config.getDatagramBodySize());
         datagramWriter.init();
     }
 
     private void shutdown(boolean instant) {
-        datagramWriter.shutdown(instant);
+        if (datagramWriter != null) {
+            LogUtil.fine(TAG, "DatagramWriter shutdown()", null);
+            datagramWriter.shutdown(instant);
+        }
+        LogUtil.fine(TAG, "DatagramWriter has been shutdown.", null);
+        if (datagramReader != null) {
+            LogUtil.fine(TAG, "DatagramReader shutdown()", null);
+            datagramReader.shutdown();
+        }
+        LogUtil.fine(TAG, "DatagramReader has been shutdown.", null);
+
+        if (writerSocket != null) {
+            writerSocket.close();
+        }
+        if (readerSocket != null) {
+            readerSocket.close();
+        }
+        LogUtil.fine(TAG, "WriterSocket and ReaderSocket has been shutdown.", null);
     }
 
     protected InetAddress getInetAddress(String address) throws UnknownHostException {
@@ -64,9 +124,9 @@ public class IPMsgTCPConnection extends AbstractConnection {
         return INETADDRES_CACHE.getOrCreate(address);
     }
 
-    private void notifyConnectionException(Exception e) {
+    private void notifyConnectionError(Exception e) {
         // TODO: 2017/2/28 impl method
-        LogUtil.warn(TAG, "Notify Connection Exception", e);
+        LogUtil.warn(TAG, "Connection closed on error.", e);
     }
 
     protected class DatagramPacketWriter {
@@ -80,6 +140,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
 
         void init() {
             shutdownTimestamp = null;
+
             queue.start();
             Async.go(new Runnable() {
                 @Override
@@ -94,9 +155,11 @@ public class IPMsgTCPConnection extends AbstractConnection {
         }
 
         private PacketEnvelope nextPacketEnvelope() {
+            LogUtil.warn(TAG, Thread.currentThread().getName() + " -> nextPacketEnvelope", null);
             PacketEnvelope element = null;
             try {
                 element = queue.take();
+                LogUtil.warn(TAG, Thread.currentThread().getName() + " -> queue take done", null);
             } catch (InterruptedException e) {
                 if (!queue.isShutdown()) {
                     LogUtil.warn(TAG, "Datagram packet thread was interrupted. Use disconnect() instead.", null);
@@ -148,7 +211,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
             }
 
             if (writerException != null) {
-                notifyConnectionException(writerException);
+                notifyConnectionError(writerException);
             }
 
         }
@@ -157,7 +220,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
             Packet packet = envelope.packet;
             InetAddress toAddress = envelope.toAddress;
             int port = envelope.port;
-            byte[] msgBuf = packet.getMsgBuf();
+            byte[] msgBuf = packet.toBytes();
 
             DatagramPacket datagramPacket = new DatagramPacket(msgBuf, msgBuf.length, toAddress, port);
             writerSocket.send(datagramPacket);
@@ -166,7 +229,9 @@ public class IPMsgTCPConnection extends AbstractConnection {
         void sendPacketEnvelope(PacketEnvelope envelope) throws InterruptedException {
             // TODO: 2017/2/28 check or throw network unavailable exception
             try {
+                LogUtil.warn(TAG, Thread.currentThread().getName() + " -> sendPacketEnvelope", null);
                 queue.put(envelope);
+                LogUtil.warn(TAG, Thread.currentThread().getName() + " -> queue put done", null);
             } catch (InterruptedException e) {
                 // TODO: 2017/2/28 check or throw network unavailable exception
                 throw e;
@@ -187,7 +252,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
      * <a href="http://stackoverflow.com/questions/7016612/are-packets-dropped-if-i-am-not-actively-receiving-from-a-datagramsocket?answertab=votes#7016909">see more</a>
      */
     protected class DatagramPacketReader {
-        private volatile  boolean done;
+        private volatile boolean done;
         private int bufferSize;
 
         void init(int bufferSize) {
@@ -211,23 +276,29 @@ public class IPMsgTCPConnection extends AbstractConnection {
         }
 
         private void receivePackets() {
-            while (!done()) {
-                byte[] bytes = new byte[bufferSize];
-                DatagramPacket datagramPacket = new DatagramPacket(bytes, bytes.length);
-                try {
+            try {
+                while (!done()) {
+                    byte[] bytes = new byte[bufferSize];
+                    DatagramPacket datagramPacket = new DatagramPacket(bytes, bytes.length);
+//                    try {
                     readerSocket.receive(datagramPacket);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
 
-                // XXX Parse packets in another block-queue.
-                try {
-                    parseAndProcessPacket(
-                            datagramPacket.getAddress().getHostAddress(),
-                            datagramPacket.getPort(),
-                            datagramPacket.getData());
-                } catch (Exception e) {
-                    LogUtil.warn(TAG, "Exception in parseAndProcessPacket, ignored.", e);
+                    // XXX Parse packets in another block-queue.
+                    try {
+                        parseAndProcessPacket(
+                                datagramPacket.getAddress().getHostAddress(),
+                                datagramPacket.getPort(),
+                                datagramPacket.getData());
+                    } catch (Exception e) {
+                        LogUtil.warn(TAG, "Exception in parseAndProcessPacket, ignored.", e);
+                    }
+                }
+            } catch (Exception e) {
+                if (!(done() || datagramWriter.queue.isShutdown())) {
+                    notifyConnectionError(e);
                 }
             }
         }

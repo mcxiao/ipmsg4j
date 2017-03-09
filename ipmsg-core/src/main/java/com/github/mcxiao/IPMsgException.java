@@ -49,6 +49,16 @@ public class IPMsgException extends Exception {
         }
     }
 
+    public static final class ConnectException extends IPMsgException {
+
+        public ConnectException(String message) {
+            super(message);
+        }
+
+        public ConnectException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 
 
 }

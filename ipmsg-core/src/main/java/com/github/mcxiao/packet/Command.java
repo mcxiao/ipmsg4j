@@ -16,6 +16,8 @@
 
 package com.github.mcxiao.packet;
 
+import com.github.mcxiao.IPMsgProtocol;
+
 /**
  */
 public class Command {
@@ -49,4 +51,21 @@ public class Command {
     public int getCommand() {
         return command;
     }
+
+    public int getMode() {
+        return IPMsgProtocol.GET_MODE(command);
+    }
+
+    public int getOpt() {
+        return IPMsgProtocol.GET_OPT(command);
+    }
+
+    public boolean acceptMode(int mode) {
+        return IPMsgProtocol.ACCEPT_MODE(command, mode);
+    }
+
+    public boolean acceptOpt(int opt) {
+        return IPMsgProtocol.ACCEPT_OPT(command, opt);
+    }
+
 }

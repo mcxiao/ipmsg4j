@@ -30,6 +30,14 @@ public final class IPMsgProtocol {
         return command & 0xffffff00;
     }
 
+    public static boolean ACCEPT_MODE(int command, int mode) {
+        return (command & mode) != 0;
+    }
+
+    public static boolean ACCEPT_OPT(int command, int opt) {
+        return (command & opt) != 0;
+    }
+
     /*  header  */
     public final static int IPMSG_VERSION = 0x0001;
     public final static int IPMSG_DEFAULT_PORT = 0x0979;

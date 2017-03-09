@@ -27,39 +27,39 @@ public final class LogUtil {
         return name;
     }
 
-    public static void err(String tag, String message, @Nullable Throwable th) {
-        log(Level.SEVERE, tag, message, th);
+    public static void err(String tag, String message, @Nullable Throwable e) {
+        log(Level.SEVERE, tag, message, e);
     }
 
     public static void errWithParams(String tag, @NotNull String message, Object... objects) {
         logWithParams(Level.SEVERE, tag, message, objects);
     }
 
-    public static void warn(String tag, String message, @Nullable Throwable th) {
-        log(Level.WARNING, tag, message, th);
+    public static void warn(String tag, String message, @Nullable Throwable e) {
+        log(Level.WARNING, tag, message, e);
     }
 
     public static void warnWithParams(String tag, @NotNull String message, Object... objects) {
         logWithParams(Level.WARNING, tag, message, objects);
     }
-    public static void info(String tag, String message, @Nullable Throwable th) {
-        log(Level.INFO, tag, message, th);
+    public static void info(String tag, String message, @Nullable Throwable e) {
+        log(Level.INFO, tag, message, e);
     }
 
     public static void infoWithParams(String tag, @NotNull String message, Object... objects) {
         logWithParams(Level.INFO, tag, message, objects);
     }
 
-    public static void fine(String tag, String message, @Nullable Throwable th) {
-        log(Level.FINE, tag, message, th);
+    public static void fine(String tag, String message, @Nullable Throwable e) {
+        log(Level.FINE, tag, message, e);
     }
 
     public static void fineWithParams(String tag, @NotNull String message, Object... objects) {
         logWithParams(Level.FINE, tag, message, objects);
     }
 
-    private static void log(Level level, String tag, String message, Throwable th) {
-        logger.log(level, buildTagAndMessage(tag, message), th);
+    private static void log(Level level, String tag, String message, Throwable e) {
+        logger.log(level, buildTagAndMessage(tag, message), e);
     }
 
     private static void logWithParams(Level level, String tag, @NotNull String message, Object... objects) {
