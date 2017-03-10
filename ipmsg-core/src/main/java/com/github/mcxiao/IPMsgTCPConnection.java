@@ -9,8 +9,6 @@ import com.github.mcxiao.packet.Packet;
 import com.github.mcxiao.util.LogUtil;
 import com.github.mcxiao.util.StringUtil;
 import com.github.mcxiao.util.cache.memory.impl.LruINetAddressMemoryCache;
-import com.oracle.tools.packager.Log;
-
 import org.jivesoftware.smack.util.ArrayBlockingQueueWithShutdown;
 import org.jivesoftware.smack.util.Async;
 
@@ -124,11 +122,6 @@ public class IPMsgTCPConnection extends AbstractConnection {
         return INETADDRES_CACHE.getOrCreate(address);
     }
 
-    private void notifyConnectionError(Exception e) {
-        // TODO: 2017/2/28 impl method
-        LogUtil.warn(TAG, "Connection closed on error.", e);
-    }
-
     protected class DatagramPacketWriter {
         private static final int QUEUE_SIZE = IPMsgTCPConnection.QUEUE_SIZE;
 
@@ -211,7 +204,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
             }
 
             if (writerException != null) {
-                notifyConnectionError(writerException);
+                notifyConnectionClosedOnError(writerException);
             }
 
         }
@@ -298,7 +291,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
                 }
             } catch (Exception e) {
                 if (!(done() || datagramWriter.queue.isShutdown())) {
-                    notifyConnectionError(e);
+                    notifyConnectionClosedOnError(e);
                 }
             }
         }

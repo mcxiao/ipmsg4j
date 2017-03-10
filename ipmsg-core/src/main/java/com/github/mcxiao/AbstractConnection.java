@@ -264,7 +264,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         this.port = config.getPort();
     }
 
-    private void notifyConnectionConnected() {
+    protected void notifyConnectionConnected() {
         for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connected(AbstractConnection.this);
@@ -274,7 +274,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         }
     }
 
-    private void notifyConnectionClosed() {
+    protected void notifyConnectionClosed() {
         for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connectionClosed();
@@ -284,7 +284,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         }
     }
     
-    private void notifyConnectionClosedOnError(Exception e) {
+    protected void notifyConnectionClosedOnError(Exception e) {
         for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connectionClosedOnError(e);
