@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  */
@@ -73,6 +75,10 @@ public abstract class AbstractConnection implements IPMsgConnection {
      * These interceptors may modify the stanza before it is being actually sent to the server.
      */
     private final Map<PacketListener, InterceptorWrapper> interceptors = new LinkedHashMap<>();
+
+    private Lock connectionLock = new ReentrantLock();
+
+    private long packetReplyTimeout = 5 * 1000;
 
     protected AbstractConnection(IPMsgConfiguration configuration) {
         this.config = configuration;
@@ -185,7 +191,12 @@ public abstract class AbstractConnection implements IPMsgConnection {
             return interceptors.remove(interceptor) != null;
         }
     }
-    
+
+    @Override
+    public long getPacketReplyTimeout() {
+        return packetReplyTimeout;
+    }
+
     public synchronized AbstractConnection connect() throws ConnectException, ClientUnavailableException, InterruptedException, NoResponseException {
         // TODO: 2017/3/6 Check already connected
 
@@ -326,6 +337,10 @@ public abstract class AbstractConnection implements IPMsgConnection {
         PacketListener getListener() {
             return listener;
         }
+    }
+
+    protected Lock getConnectionLock() {
+        return connectionLock;
     }
 
     protected static class InterceptorWrapper {

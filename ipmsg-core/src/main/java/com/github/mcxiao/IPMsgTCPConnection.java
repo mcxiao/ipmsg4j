@@ -33,6 +33,9 @@ public class IPMsgTCPConnection extends AbstractConnection {
     private DatagramPacketReader datagramReader;
     private DatagramPacketWriter datagramWriter;
 
+    private SimpleSynchronizationPoint<Exception> initialSocketComplete = new
+            SimpleSynchronizationPoint<>(IPMsgTCPConnection.this, "initial socket complete");
+
     public IPMsgTCPConnection(IPMsgConfiguration configuration) {
         super(configuration);
         this.config = configuration;
@@ -46,12 +49,23 @@ public class IPMsgTCPConnection extends AbstractConnection {
         // Sockets setup successfully.
         initConnection();
 
-        // XXX Broadcast available packets
-        Command command = new Command(IPMsgProtocol.IPMSG_BR_ENTRY);
-        Packet packet = new Packet(IPMsgProperties.VERSION_STRING, String.valueOf(0), command, new HostSub(getSenderName(), getSenderHost()));
-        packet.setTo("255.255.255.255");
-        packet.setFrom(getLocalhostAddress());
-        sendPacket(packet);
+//        // XXX Broadcast available packets
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                int i = 0;
+//                try {
+//                    while (i < 10) {
+//                        brEntry(String.valueOf(i++));
+//                        Thread.sleep(30 * 1000);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }, "Broadcast thread").start();
+        initialSocketComplete.checkIfSuccessOrWait();
+        brEntry("0");
     }
 
     @Override
@@ -95,6 +109,16 @@ public class IPMsgTCPConnection extends AbstractConnection {
         datagramWriter.init();
     }
 
+    private void brEntry(String packetNo)
+            throws ClientUnavailableException, InterruptedException, NoResponseException {
+        Command command = new Command(IPMsgProtocol.IPMSG_BR_ENTRY);
+        Packet packet = new Packet(IPMsgProperties.VERSION_STRING, packetNo,
+                command, new HostSub(getSenderName(), getSenderHost()));
+        packet.setTo("255.255.255.255");
+        packet.setFrom(getLocalhostAddress());
+        sendPacket(packet);
+    }
+
     private void shutdown(boolean instant) {
         if (datagramWriter != null) {
             LogUtil.fine(TAG, "DatagramWriter shutdown()", null);
@@ -114,6 +138,8 @@ public class IPMsgTCPConnection extends AbstractConnection {
             readerSocket.close();
         }
         LogUtil.fine(TAG, "WriterSocket and ReaderSocket has been shutdown.", null);
+
+        initialSocketComplete.init();
     }
 
     protected InetAddress getInetAddress(String address) throws UnknownHostException {
@@ -164,6 +190,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
         private void writeEnvelopes() {
             Exception writerException = null;
             try {
+                initialSocketComplete.reportSuccess();
                 while (!done()) {
 
                     PacketEnvelope envelope = nextPacketEnvelope();
@@ -270,6 +297,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
 
         private void receivePackets() {
             try {
+                initialSocketComplete.checkIfSuccessOrWait();
                 while (!done()) {
                     byte[] bytes = new byte[bufferSize];
                     DatagramPacket datagramPacket = new DatagramPacket(bytes, bytes.length);

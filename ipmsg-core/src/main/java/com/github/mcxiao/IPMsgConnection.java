@@ -57,4 +57,6 @@ public interface IPMsgConnection {
 
     void removeConnectionListener(ConnectionListener listener);
 
+    long getPacketReplyTimeout();
+
 }
