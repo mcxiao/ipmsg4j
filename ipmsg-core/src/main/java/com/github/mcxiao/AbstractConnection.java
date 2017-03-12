@@ -16,24 +16,25 @@
 
 package com.github.mcxiao;
 
-import com.github.mcxiao.IPMsgException.ClientUnavailableException;
+import com.github.mcxiao.IPMsgException.AlreadyConnectException;
 import com.github.mcxiao.IPMsgException.ConnectException;
-import com.github.mcxiao.IPMsgException.NoResponseException;
+import com.github.mcxiao.IPMsgException.NotConnectedException;
 import com.github.mcxiao.packet.Packet;
 import com.github.mcxiao.util.IPMsgThreadFactory;
 import com.github.mcxiao.util.LogUtil;
 import com.github.mcxiao.util.PacketParseUtil;
 import com.github.mcxiao.util.StringUtil;
 import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
+import org.jivesoftware.smack.util.Async;
 import org.jivesoftware.smack.util.BoundedThreadPoolExecutor;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,7 +52,10 @@ public abstract class AbstractConnection implements IPMsgConnection {
 
     private final BoundedThreadPoolExecutor executorService =
             new BoundedThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS,
-            100, new IPMsgThreadFactory("Incoming Processor"));
+                    100, new IPMsgThreadFactory("Incoming Processor"));
+
+    private final ExecutorService singleThreadExecutorService =
+            Executors.newSingleThreadExecutor(new IPMsgThreadFactory("Single thread executor"));
 
     private final Set<ConnectionListener> connectionListeners = new CopyOnWriteArraySet<>();
 
@@ -64,17 +68,20 @@ public abstract class AbstractConnection implements IPMsgConnection {
      * List of PacketListeners that will be notified asynchronously when a new packet was received.
      */
     private final Map<PacketListener, ListenerWrapper> asyncRecvListeners = new LinkedHashMap<>();
-    
+
     /**
      * List of PacketListeners that will be notified when a new packet was sent.
      */
     private final Map<PacketListener, ListenerWrapper> sendListeners = new HashMap<>();
-    
+
     /**
      * This PacketListeners will be notified when a new packet is about to be sent to the server.
      * These interceptors may modify the stanza before it is being actually sent to the server.
      */
     private final Map<PacketListener, InterceptorWrapper> interceptors = new LinkedHashMap<>();
+
+
+    protected boolean connected = false;
 
     private Lock connectionLock = new ReentrantLock();
 
@@ -105,21 +112,28 @@ public abstract class AbstractConnection implements IPMsgConnection {
     }
 
     @Override
-    public void sendPacket(Packet packet)
-            throws NoResponseException, ClientUnavailableException, InterruptedException {
+    public void sendPacket(Packet packet) throws InterruptedException, IPMsgException {
+        if (packet == null) {
+            throw new NullPointerException("Packet must not be null");
+        }
+
+        checkNotConnectedOrThrow(null);
+
+        // Interceptors may modify the content of the packet.
+        firePacketInterceptors(packet);
         sendInternal(packet);
     }
-    
+
     @Override
     public void addPacketListener(PacketListener listener, PacketFilter filter) {
         addAsyncPacketListener(listener, filter);
     }
-    
+
     @Override
     public boolean removePacketListener(PacketListener listener) {
         return removeAsyncPacketListener(listener);
     }
-    
+
     @Override
     public void addAsyncPacketListener(PacketListener listener, PacketFilter filter) {
         if (listener == null) {
@@ -130,14 +144,14 @@ public abstract class AbstractConnection implements IPMsgConnection {
             asyncRecvListeners.put(listener, wrapper);
         }
     }
-    
+
     @Override
     public boolean removeAsyncPacketListener(PacketListener listener) {
         synchronized (asyncRecvListeners) {
             return asyncRecvListeners.remove(listener) != null;
         }
     }
-    
+
     @Override
     public void addSyncPacketListener(PacketListener listener, PacketFilter filter) {
         if (listener == null) {
@@ -148,14 +162,14 @@ public abstract class AbstractConnection implements IPMsgConnection {
             syncRecvListeners.put(listener, wrapper);
         }
     }
-    
+
     @Override
     public boolean removeSyncPacketListener(PacketListener listener) {
         synchronized (syncRecvListeners) {
             return syncRecvListeners.remove(listener) != null;
         }
     }
-    
+
     @Override
     public void addPacketSendingListener(PacketListener listener, PacketFilter filter) {
         if (listener == null) {
@@ -166,14 +180,14 @@ public abstract class AbstractConnection implements IPMsgConnection {
             sendListeners.put(listener, wrapper);
         }
     }
-    
+
     @Override
     public void removePacketSendingListener(PacketListener listener) {
         synchronized (sendListeners) {
             sendListeners.remove(listener);
         }
     }
-    
+
     @Override
     public void addPacketInterceptor(PacketListener interceptor, PacketFilter filter) {
         if (interceptor == null) {
@@ -184,7 +198,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
             interceptors.put(interceptor, wrapper);
         }
     }
-    
+
     @Override
     public boolean removePacketInterceptor(PacketListener interceptor) {
         synchronized (interceptors) {
@@ -197,27 +211,33 @@ public abstract class AbstractConnection implements IPMsgConnection {
         return packetReplyTimeout;
     }
 
-    public synchronized AbstractConnection connect() throws ConnectException, ClientUnavailableException, InterruptedException, NoResponseException {
-        // TODO: 2017/3/6 Check already connected
+    public synchronized AbstractConnection connect() throws IPMsgException, InterruptedException {
+        checkAlreadyConnectedOrThrow();
 
         setupLocalHostAndPort(this.config);
 
         connectionInternal();
 
+        connected = true;
         notifyConnectionConnected();
 
         return this;
     }
 
+    @Override
+    public boolean isConnected() {
+        return connected;
+    }
+
     public void disconnect() {
         try {
             disconnect(null);       // XXX: 2017/3/6 Broadcast absence packet.
-        } catch (ClientUnavailableException e) {
+        } catch (IPMsgException e) {
             LogUtil.fine(TAG, "Connection already disconnected.", e);
         }
     }
 
-    public synchronized void disconnect(Packet unavailablePacket) throws ClientUnavailableException {
+    public synchronized void disconnect(Packet unavailablePacket) throws IPMsgException {
         try {
             sendInternal(unavailablePacket);
         } catch (InterruptedException e) {
@@ -228,12 +248,12 @@ public abstract class AbstractConnection implements IPMsgConnection {
         notifyConnectionClosed();
     }
 
-    protected abstract void connectionInternal() throws ConnectException, ClientUnavailableException, InterruptedException, NoResponseException;
+    protected abstract void connectionInternal() throws InterruptedException, IPMsgException;
 
     protected abstract void shutdown();
 
     protected abstract void sendInternal(Packet packet)
-            throws InterruptedException, ClientUnavailableException;
+            throws InterruptedException, IPMsgException;
 
     protected void parseAndProcessPacket(String address, int port, byte[] msgBuf) throws Exception {
         Packet packet = null;
@@ -248,7 +268,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         }
     }
 
-    protected void processPacket(final Packet packet) throws InterruptedException {
+    private void processPacket(final Packet packet) throws InterruptedException {
         assert (packet != null);
 
         executorService.executeBlocking(new Runnable() {
@@ -294,7 +314,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
             }
         }
     }
-    
+
     protected void notifyConnectionClosedOnError(Exception e) {
         for (ConnectionListener listener : connectionListeners) {
             try {
@@ -306,7 +326,86 @@ public abstract class AbstractConnection implements IPMsgConnection {
     }
 
     private void notifyRecvListeners(Packet packet) {
-        // TODO: 2017/3/6 Impl method.
+        final Collection<PacketListener> listenersToNotify = new LinkedList<>();
+
+        synchronized (asyncRecvListeners) {
+            for (ListenerWrapper wrapper : asyncRecvListeners.values()) {
+                if (wrapper.filterMatches(packet)) {
+                    listenersToNotify.add(wrapper.getListener());
+                }
+            }
+        }
+
+        for (PacketListener listener : listenersToNotify) {
+            Async.go(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        listener.processPacket(packet);
+                    } catch (Exception e) {
+                        LogUtil.warn(TAG, "Exception in async packet listener", e);
+                    }
+                }
+            });
+        }
+
+        listenersToNotify.clear();
+        synchronized (syncRecvListeners) {
+            for (ListenerWrapper wrapper : syncRecvListeners.values()) {
+                if (wrapper.filterMatches(packet)) {
+                    listenersToNotify.add(wrapper.getListener());
+                }
+            }
+        }
+
+        for (PacketListener listener : listenersToNotify) {
+            singleThreadExecutorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        listener.processPacket(packet);
+                    } catch (Exception e) {
+                        LogUtil.warn(TAG, "Exception in sync packet listener", e);
+                    }
+                }
+            });
+        }
+    }
+
+    private void firePacketInterceptors(Packet packet) {
+        List<PacketListener> interceptorsToFire = new LinkedList<>();
+        synchronized (interceptors) {
+            for (InterceptorWrapper wrapper : interceptors.values()) {
+                if (wrapper.filterMatches(packet)) {
+                    interceptorsToFire.add(wrapper.getInterceptor());
+                }
+            }
+        }
+        for (PacketListener interceptor : interceptorsToFire) {
+            try {
+                interceptor.processPacket(packet);
+            } catch (Exception e) {
+                LogUtil.warn(TAG, "Exception in packet interceptor", e);
+            }
+        }
+    }
+
+    protected void firePacketSendingListener(Packet packet) {
+        LinkedList<PacketListener> listenersToFire = new LinkedList<>();
+        synchronized (sendListeners) {
+            for (ListenerWrapper wrapper : sendListeners.values()) {
+                if (wrapper.filterMatches(packet)) {
+                    listenersToFire.add(wrapper.getListener());
+                }
+            }
+        }
+        for (PacketListener listener : listenersToFire) {
+            try {
+                listener.processPacket(packet);
+            } catch (Exception e) {
+                LogUtil.warn(TAG, "Exception in packet sending listener", e);
+            }
+        }
     }
 
     @Override
@@ -321,6 +420,16 @@ public abstract class AbstractConnection implements IPMsgConnection {
         connectionListeners.remove(listener);
     }
 
+    protected void checkNotConnectedOrThrow(@Nullable String message) throws NotConnectedException {
+        if (!isConnected())
+            throw new NotConnectedException(message);
+    }
+
+    protected void checkAlreadyConnectedOrThrow() throws AlreadyConnectException {
+        if (isConnected())
+            throw new AlreadyConnectException(null);
+    }
+
     protected static class ListenerWrapper {
         private final PacketListener listener;
         private final PacketFilter filter;
@@ -330,7 +439,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
             this.filter = filter;
         }
 
-        boolean filterMathes(Packet packet) {
+        boolean filterMatches(Packet packet) {
             return filter.accept(packet);
         }
 
@@ -352,7 +461,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
             this.filter = filter;
         }
 
-        boolean filterMathes(Packet packet) {
+        boolean filterMatches(Packet packet) {
             return filter.accept(packet);
         }
 

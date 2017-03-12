@@ -31,7 +31,7 @@ public interface IPMsgConnection {
 
     int getPort();
 
-    void sendPacket(Packet packet) throws NoResponseException, InterruptedException, IPMsgException.ClientUnavailableException;
+    void sendPacket(Packet packet) throws InterruptedException, IPMsgException;
 
     void addPacketListener(PacketListener listener, PacketFilter filter);
 
@@ -56,6 +56,8 @@ public interface IPMsgConnection {
     void addConnectionListener(ConnectionListener listener);
 
     void removeConnectionListener(ConnectionListener listener);
+
+    boolean isConnected();
 
     long getPacketReplyTimeout();
 

@@ -42,7 +42,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
     }
 
     @Override
-    protected void connectionInternal() throws ConnectException, ClientUnavailableException, InterruptedException, NoResponseException {
+    protected void connectionInternal() throws InterruptedException, IPMsgException {
         // Initialize connection and setup the reader and writer.
         connectUsingConfiguration();
 
@@ -74,7 +74,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
     }
 
     @Override
-    protected void sendInternal(Packet packet) throws InterruptedException, ClientUnavailableException {
+    protected void sendInternal(Packet packet) throws InterruptedException, IPMsgException {
         InetAddress toAddress = null;
         try {
             toAddress = getInetAddress(packet.getTo());
@@ -109,8 +109,8 @@ public class IPMsgTCPConnection extends AbstractConnection {
         datagramWriter.init();
     }
 
-    private void brEntry(String packetNo)
-            throws ClientUnavailableException, InterruptedException, NoResponseException {
+    @Deprecated
+    private void brEntry(String packetNo) throws IPMsgException, InterruptedException {
         Command command = new Command(IPMsgProtocol.IPMSG_BR_ENTRY);
         Packet packet = new Packet(IPMsgProperties.VERSION_STRING, packetNo,
                 command, new HostSub(getSenderName(), getSenderHost()));
@@ -139,6 +139,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
         }
         LogUtil.fine(TAG, "WriterSocket and ReaderSocket has been shutdown.", null);
 
+        connected = false;
         initialSocketComplete.init();
     }
 
@@ -198,6 +199,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
                         continue;
 
                     sendDatagramPacketByEnvelope(envelope);
+                    firePacketSendingListener(envelope.packet);
                 }
 
                 if (!instantShutdown) {
@@ -205,6 +207,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
                         while (!queue.isEmpty()) {
                             PacketEnvelope envelope = queue.remove();
                             sendDatagramPacketByEnvelope(envelope);
+                            // Won't fire the packet sending listener while shutdown.
                         }
                     } catch (Exception e) {
                         LogUtil.warn(TAG, "Exception during queue shutdown, ignored.", e);

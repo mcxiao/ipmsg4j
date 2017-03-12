@@ -60,5 +60,27 @@ public class IPMsgException extends Exception {
         }
     }
 
+    public static final class NotConnectedException extends IPMsgException {
+
+        public NotConnectedException(String message) {
+            super(message);
+        }
+
+        public NotConnectedException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    public static final class AlreadyConnectException extends IPMsgException {
+
+        public AlreadyConnectException(String message) {
+            super(message);
+        }
+
+        public AlreadyConnectException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 
 }
