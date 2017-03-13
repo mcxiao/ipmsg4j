@@ -9,12 +9,11 @@ import java.net.UnknownHostException;
  */
 public class TestIPMsgConnection {
 
-
     @Test
-    public void testSessionCreate() throws UnknownHostException, IPMsgException.ConnectException, IPMsgException.ClientUnavailableException, InterruptedException, IPMsgException.NoResponseException {
+    public void testSessionCreate() throws UnknownHostException, IPMsgException, InterruptedException {
         IPMsgConfiguration configuration = IPMsgConfiguration.create()
                 .setLocalHost(InetAddress.getLocalHost().getHostAddress());
-        IPMsgTCPConnection session = new IPMsgTCPConnection(configuration);
+        IPMsgConnectionImpl session = new IPMsgConnectionImpl(configuration);
         session.connect();
     }
 

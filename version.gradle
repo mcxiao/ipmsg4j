@@ -1,0 +1,7 @@
+allprojects {
+    ext {
+        shortVersion = "0.1.0-alpha"
+        isSnapshot = true
+        ipmsgVersion = "Draft-10 (Modified 2014/11/08)"
+    }
+}

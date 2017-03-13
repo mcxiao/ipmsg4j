@@ -2,7 +2,6 @@ package com.github.mcxiao;
 
 import com.github.mcxiao.IPMsgException.ClientUnavailableException;
 import com.github.mcxiao.IPMsgException.ConnectException;
-import com.github.mcxiao.IPMsgException.NoResponseException;
 import com.github.mcxiao.packet.Command;
 import com.github.mcxiao.packet.HostSub;
 import com.github.mcxiao.packet.Packet;
@@ -17,10 +16,10 @@ import java.net.*;
 
 /**
  */
-public class IPMsgTCPConnection extends AbstractConnection {
+public class IPMsgConnectionImpl extends AbstractConnection {
 
     private static final int QUEUE_SIZE = 500;
-    private static final String TAG = LogUtil.createTag(IPMsgTCPConnection.class.getSimpleName(), null);
+    private static final String TAG = LogUtil.createTag(IPMsgConnectionImpl.class.getSimpleName(), null);
 
     private IPMsgConfiguration config;
 
@@ -34,9 +33,9 @@ public class IPMsgTCPConnection extends AbstractConnection {
     private DatagramPacketWriter datagramWriter;
 
     private SimpleSynchronizationPoint<Exception> initialSocketComplete = new
-            SimpleSynchronizationPoint<>(IPMsgTCPConnection.this, "initial socket complete");
+            SimpleSynchronizationPoint<>(IPMsgConnectionImpl.this, "initial socket complete");
 
-    public IPMsgTCPConnection(IPMsgConfiguration configuration) {
+    public IPMsgConnectionImpl(IPMsgConfiguration configuration) {
         super(configuration);
         this.config = configuration;
     }
@@ -50,20 +49,6 @@ public class IPMsgTCPConnection extends AbstractConnection {
         initConnection();
 
 //        // XXX Broadcast available packets
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                int i = 0;
-//                try {
-//                    while (i < 10) {
-//                        brEntry(String.valueOf(i++));
-//                        Thread.sleep(30 * 1000);
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }, "Broadcast thread").start();
         initialSocketComplete.checkIfSuccessOrWait();
         brEntry("0");
     }
@@ -150,7 +135,7 @@ public class IPMsgTCPConnection extends AbstractConnection {
     }
 
     protected class DatagramPacketWriter {
-        private static final int QUEUE_SIZE = IPMsgTCPConnection.QUEUE_SIZE;
+        private static final int QUEUE_SIZE = IPMsgConnectionImpl.QUEUE_SIZE;
 
         private final ArrayBlockingQueueWithShutdown<PacketEnvelope> queue =
                 new ArrayBlockingQueueWithShutdown<>(QUEUE_SIZE, true);

@@ -1,13 +1,21 @@
+apply from: 'version.gradle'
+
 group 'com.github.mcxiao'
-version '1.0-SNAPSHOT'
+version = shortVersion
+if (isSnapshot) {
+    version += "-SNAPSHOT"
+}
 
-apply plugin: 'java'
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
 
-sourceCompatibility = 1.5
-
-repositories {
-//    mavenCentral()
-    jcenter()
+allprojects {
+    apply plugin: 'java'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 }
 
 dependencies {
