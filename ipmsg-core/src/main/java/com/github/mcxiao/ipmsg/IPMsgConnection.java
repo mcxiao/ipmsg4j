@@ -16,6 +16,7 @@
 
 package com.github.mcxiao.ipmsg;
 
+import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
 
 /**
@@ -25,6 +26,8 @@ public interface IPMsgConnection {
     String getSenderHost();
 
     String getSenderName();
+
+    HostSub getHostSub();
 
     String getLocalhostAddress();
 

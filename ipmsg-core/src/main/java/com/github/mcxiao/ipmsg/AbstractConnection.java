@@ -16,6 +16,7 @@
 
 package com.github.mcxiao.ipmsg;
 
+import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
 import com.github.mcxiao.ipmsg.util.LogUtil;
@@ -44,6 +45,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
 
     private final IPMsgConfiguration config;
 
+    private HostSub hostSub;
     private InetAddress localHost;
     private int port;
 
@@ -86,16 +88,22 @@ public abstract class AbstractConnection implements IPMsgConnection {
 
     protected AbstractConnection(IPMsgConfiguration configuration) {
         this.config = configuration;
+        hostSub = new HostSub(config.getSenderName(), config.getSenderHost());
     }
 
     @Override
     public String getSenderHost() {
-        return config.getSenderHost();
+        return hostSub.getSenderHost();
     }
 
     @Override
     public String getSenderName() {
-        return config.getSenderName();
+        return hostSub.getSenderName();
+    }
+
+    @Override
+    public HostSub getHostSub() {
+        return hostSub;
     }
 
     @Override
@@ -237,12 +245,13 @@ public abstract class AbstractConnection implements IPMsgConnection {
     public synchronized void disconnect(Packet unavailablePacket) throws IPMsgException {
         try {
             sendInternal(unavailablePacket);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             LogUtil.fine(TAG, "Interrupted when disconnect the connection. Continuing.", e);
         }
 
         shutdown();
         notifyConnectionClosed();
+        this.hostSub = null;
     }
 
     protected abstract void connectionInternal() throws InterruptedException, IPMsgException;
