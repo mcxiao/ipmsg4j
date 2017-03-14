@@ -64,4 +64,8 @@ public interface IPMsgConnection {
 
     long getPacketReplyTimeout();
 
+    boolean isSupportUtf8();
+
+    boolean isSupportFileAttach();
+
 }

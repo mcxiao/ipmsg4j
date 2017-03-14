@@ -218,6 +218,16 @@ public abstract class AbstractConnection implements IPMsgConnection {
         return packetReplyTimeout;
     }
 
+    @Override
+    public boolean isSupportUtf8() {
+        return this.config.isSupportUtf8();
+    }
+
+    @Override
+    public boolean isSupportFileAttach() {
+        return this.config.isSupportFileAttach();
+    }
+
     public synchronized AbstractConnection connect() throws IPMsgException, InterruptedException {
         checkAlreadyConnectedOrThrow();
 
