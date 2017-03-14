@@ -16,7 +16,7 @@
 
 package com.github.mcxiao.ipmsg.packet;
 
-import com.github.mcxiao.ipmsg.IPMsgProtocol;
+import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 
 /**
@@ -30,9 +30,8 @@ public class Packet implements Element {
     private byte[] msgBuf;
     private long timestamp;
 
-    private String to;
-    private String from;
-    private int port = IPMsgProtocol.PORT;
+    private Address to;
+    private Address from;
 
     public Packet(String version, String packetNo, Command command, HostSub hostSub) {
         this.version = version;
@@ -104,24 +103,19 @@ public class Packet implements Element {
         this.timestamp = timestamp;
     }
 
-    public String getTo() {
+    public Address getTo() {
         return to;
     }
 
-    public void setTo(String to) {
+    public void setTo(Address to) {
         this.to = to;
     }
 
-    public String getFrom() {
+    public Address getFrom() {
         return from;
     }
 
-    public void setFrom(String from) {
+    public void setFrom(Address from) {
         this.from = from;
     }
-
-    public int getPort() {
-        return this.port;
-    }
-
 }

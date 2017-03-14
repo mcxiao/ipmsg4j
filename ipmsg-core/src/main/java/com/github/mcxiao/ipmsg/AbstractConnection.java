@@ -16,6 +16,9 @@
 
 package com.github.mcxiao.ipmsg;
 
+import com.github.mcxiao.ipmsg.address.Address;
+import com.github.mcxiao.ipmsg.address.BroadcastAddress;
+import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
@@ -46,8 +49,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
     private final IPMsgConfiguration config;
 
     private HostSub hostSub;
-    private InetAddress localHost;
-    private int port;
+    private Address localHost;
 
     private final BoundedThreadPoolExecutor executorService =
             new BoundedThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS,
@@ -107,13 +109,13 @@ public abstract class AbstractConnection implements IPMsgConnection {
     }
 
     @Override
-    public String getLocalhostAddress() {
-        return localHost.getHostAddress();
+    public Address getLocalhostAddress() {
+        return localHost;
     }
 
     @Override
     public int getPort() {
-        return port;
+        return localHost.getPort();
     }
 
     @Override
@@ -297,8 +299,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
             throw new IPMsgException.ConnectException("Localhost unavailable.", e);
         }
 
-        this.localHost = localHost;
-        this.port = config.getPort();
+        this.localHost = new Address(config.getLocalHost(), config.getPort());
     }
 
     protected void notifyConnectionConnected() {

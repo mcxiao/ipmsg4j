@@ -16,12 +16,11 @@
 
 package com.github.mcxiao.ipmsg;
 
-import com.github.mcxiao.ipmsg.packet.Command;
-import com.github.mcxiao.ipmsg.packet.HostSub;
+import com.github.mcxiao.ipmsg.address.Address;
+import com.github.mcxiao.ipmsg.address.IPAddressCache;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.util.LogUtil;
 import com.github.mcxiao.ipmsg.util.StringUtil;
-import com.github.mcxiao.ipmsg.util.cache.memory.impl.LruINetAddressMemoryCache;
 import org.jivesoftware.smack.util.ArrayBlockingQueueWithShutdown;
 import org.jivesoftware.smack.util.Async;
 
@@ -36,9 +35,6 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     private static final String TAG = LogUtil.createTag(IPMsgConnectionImpl.class.getSimpleName(), null);
 
     private IPMsgConfiguration config;
-
-    // XXX Some improve: Dynamic create(according network users)
-    private static final LruINetAddressMemoryCache INETADDRES_CACHE = new LruINetAddressMemoryCache(20);
 
     private DatagramSocket readerSocket;
     private DatagramSocket writerSocket;
@@ -64,7 +60,6 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
 //        // XXX Broadcast available packets
         initialSocketComplete.checkIfSuccessOrWait();
-        brEntry("0");
     }
 
     @Override
@@ -76,12 +71,11 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     protected void sendInternal(Packet packet) throws InterruptedException, IPMsgException {
         InetAddress toAddress = null;
         try {
-            toAddress = getInetAddress(packet.getTo());
+            toAddress = packet.getTo().getInetAddress();
         } catch (UnknownHostException e) {
-            throw new IPMsgException.ClientUnavailableException("Address not available", e);
+            throw new IPMsgException.ClientUnavailableException("Address not available.", e);
         }
-        PacketEnvelope packetEnvelope = new PacketEnvelope(packet, toAddress, packet.getPort());
-        datagramWriter.sendPacketEnvelope(packetEnvelope);
+        datagramWriter.sendPacket(packet);
     }
 
     private void connectUsingConfiguration() throws IPMsgException.ConnectException {
@@ -106,16 +100,6 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
         datagramReader.init(config.getDatagramBodySize());
         datagramWriter.init();
-    }
-
-    @Deprecated
-    private void brEntry(String packetNo) throws IPMsgException, InterruptedException {
-        Command command = new Command(IPMsgProtocol.IPMSG_BR_ENTRY);
-        Packet packet = new Packet(IPMsgProperties.VERSION_STRING, packetNo,
-                command, new HostSub(getSenderName(), getSenderHost()));
-        packet.setTo("255.255.255.255");
-        packet.setFrom(getLocalhostAddress());
-        sendPacket(packet);
     }
 
     private void shutdown(boolean instant) {
@@ -145,13 +129,13 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     protected InetAddress getInetAddress(String address) throws UnknownHostException {
         if (StringUtil.isNullOrEmpty(address))
             throw new UnknownHostException("Address can't be null or empty.");
-        return INETADDRES_CACHE.getOrCreate(address);
+        return IPAddressCache.getInstance().getInetAddress(address);
     }
 
     protected class DatagramPacketWriter {
         private static final int QUEUE_SIZE = IPMsgConnectionImpl.QUEUE_SIZE;
 
-        private final ArrayBlockingQueueWithShutdown<PacketEnvelope> queue =
+        private final ArrayBlockingQueueWithShutdown<Packet> queue =
                 new ArrayBlockingQueueWithShutdown<>(QUEUE_SIZE, true);
 
         protected volatile Long shutdownTimestamp = null;
@@ -164,7 +148,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             Async.go(new Runnable() {
                 @Override
                 public void run() {
-                    writeEnvelopes();
+                    writePacket();
                 }
             }, "Datagram packet writer");
         }
@@ -173,12 +157,10 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             return shutdownTimestamp != null;
         }
 
-        private PacketEnvelope nextPacketEnvelope() {
-            LogUtil.warn(TAG, Thread.currentThread().getName() + " -> nextPacketEnvelope", null);
-            PacketEnvelope element = null;
+        private Packet nextPacket() {
+            Packet element = null;
             try {
                 element = queue.take();
-                LogUtil.warn(TAG, Thread.currentThread().getName() + " -> queue take done", null);
             } catch (InterruptedException e) {
                 if (!queue.isShutdown()) {
                     LogUtil.warn(TAG, "Datagram packet thread was interrupted. Use disconnect() instead.", null);
@@ -187,25 +169,25 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             return element;
         }
 
-        private void writeEnvelopes() {
+        private void writePacket() {
             Exception writerException = null;
             try {
                 initialSocketComplete.reportSuccess();
                 while (!done()) {
 
-                    PacketEnvelope envelope = nextPacketEnvelope();
-                    if (envelope == null)
+                    Packet packet = nextPacket();
+                    if (packet == null)
                         continue;
 
-                    sendDatagramPacketByEnvelope(envelope);
-                    firePacketSendingListener(envelope.packet);
+                    sendDatagramPacket(packet);
+                    firePacketSendingListener(packet);
                 }
 
                 if (!instantShutdown) {
                     try {
                         while (!queue.isEmpty()) {
-                            PacketEnvelope envelope = queue.remove();
-                            sendDatagramPacketByEnvelope(envelope);
+                            Packet packet = queue.remove();
+                            sendDatagramPacket(packet);
                             // Won't fire the packet sending listener while shutdown.
                         }
                     } catch (Exception e) {
@@ -226,7 +208,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
                 if (!done() || queue.isShutdown()) {
                     writerException = e;
                 } else {
-                    LogUtil.fine(TAG, "Ignoring Exception in writeEnvelopes()", e);
+                    LogUtil.fine(TAG, "Ignoring Exception in writePacket()", e);
                 }
             } finally {
                 // TODO: 2017/2/28
@@ -238,22 +220,19 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
         }
 
-        private void sendDatagramPacketByEnvelope(PacketEnvelope envelope) throws IOException {
-            Packet packet = envelope.packet;
-            InetAddress toAddress = envelope.toAddress;
-            int port = envelope.port;
+        private void sendDatagramPacket(Packet packet) throws IOException {
+            Address to = packet.getTo();
             byte[] msgBuf = packet.toBytes();
 
-            DatagramPacket datagramPacket = new DatagramPacket(msgBuf, msgBuf.length, toAddress, port);
+            DatagramPacket datagramPacket = new DatagramPacket(msgBuf, msgBuf.length,
+                    to.getInetAddress(), to.getPort());
             writerSocket.send(datagramPacket);
         }
 
-        void sendPacketEnvelope(PacketEnvelope envelope) throws InterruptedException {
+        void sendPacket(Packet packet) throws InterruptedException {
             // TODO: 2017/2/28 check or throw network unavailable exception
             try {
-                LogUtil.warn(TAG, Thread.currentThread().getName() + " -> sendPacketEnvelope", null);
-                queue.put(envelope);
-                LogUtil.warn(TAG, Thread.currentThread().getName() + " -> queue put done", null);
+                queue.put(packet);
             } catch (InterruptedException e) {
                 // TODO: 2017/2/28 check or throw network unavailable exception
                 throw e;
@@ -326,18 +305,6 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             }
         }
 
-    }
-
-    private static class PacketEnvelope {
-        Packet packet;
-        InetAddress toAddress;
-        int port;
-
-        PacketEnvelope(Packet packet, InetAddress toAddress, int port) {
-            this.packet = packet;
-            this.toAddress = toAddress;
-            this.port = port;
-        }
     }
 
 }
