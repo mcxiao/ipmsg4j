@@ -18,6 +18,7 @@ package com.github.mcxiao.ipmsg.util;
 
 import com.github.mcxiao.ipmsg.IPMsgException;
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
+import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
@@ -86,6 +87,7 @@ public final class PacketParseUtil {
                 ext,
                 System.currentTimeMillis());
 
+        packet.setFrom(new Address(from, port));
         return packet;
     }
 
