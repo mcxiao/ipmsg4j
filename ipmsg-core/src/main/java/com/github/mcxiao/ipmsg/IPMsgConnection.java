@@ -16,6 +16,8 @@
 
 package com.github.mcxiao.ipmsg;
 
+import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
+import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
@@ -36,7 +38,7 @@ public interface IPMsgConnection {
 
     int getPort();
 
-    void sendPacket(Packet packet) throws InterruptedException, IPMsgException;
+    void sendPacket(Packet packet) throws NotConnectedException, ClientUnavailableException, InterruptedException;
 
     void addPacketListener(PacketListener listener, PacketFilter filter);
 

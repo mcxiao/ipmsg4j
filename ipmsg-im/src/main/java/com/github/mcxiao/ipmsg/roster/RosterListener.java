@@ -1,5 +1,5 @@
 /*
- * Copyright [2017] [$author]
+ * Copyright [2017] [xiao]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package com.github.mcxiao.ipmsg;
+package com.github.mcxiao.ipmsg.roster;
 
-import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
-import com.github.mcxiao.ipmsg.packet.Packet;
+import com.github.mcxiao.ipmsg.address.Address;
 
 /**
  */
-public interface PacketListener {
+public interface RosterListener {
 
-    void processPacket(Packet packet) throws NotConnectedException, InterruptedException;
+    void addEntry(Address address);
 
+    void updateEntry(Address address);
+
+    void deletedEntry(Address address);
 }

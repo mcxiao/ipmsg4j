@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package com.github.mcxiao.ipmsg;
+package com.github.mcxiao.ipmsg.roster;
 
-import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
-import com.github.mcxiao.ipmsg.packet.Packet;
+import com.github.mcxiao.ipmsg.IPMsgProtocol;
+import com.github.mcxiao.ipmsg.filter.PacketCommandFilter;
 
 /**
  */
-public interface PacketListener {
+public class RosterPacketFilter extends PacketCommandFilter {
 
-    void processPacket(Packet packet) throws NotConnectedException, InterruptedException;
-
+    @Override
+    protected int[] getCommands() {
+        int[] commands = new int[4];
+        commands[0] = IPMsgProtocol.IPMSG_BR_ENTRY;
+        commands[1] = IPMsgProtocol.IPMSG_BR_EXIT;
+        commands[2] = IPMsgProtocol.IPMSG_BR_ABSENCE;
+        commands[3] = IPMsgProtocol.IPMSG_ANSENTRY;
+        return commands;
+    }
 }

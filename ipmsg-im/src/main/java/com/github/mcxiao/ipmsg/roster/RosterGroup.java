@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package com.github.mcxiao.ipmsg;
-
-import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
-import com.github.mcxiao.ipmsg.packet.Packet;
+package com.github.mcxiao.ipmsg.roster;
 
 /**
  */
-public interface PacketListener {
+public class RosterGroup {
 
-    void processPacket(Packet packet) throws NotConnectedException, InterruptedException;
+    private String name;
 
+    public RosterGroup(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

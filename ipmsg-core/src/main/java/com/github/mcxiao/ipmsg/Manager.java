@@ -1,5 +1,5 @@
 /*
- * Copyright [2017] [$author]
+ * Copyright [2017] [xiao]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,24 @@
 
 package com.github.mcxiao.ipmsg;
 
-import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
-import com.github.mcxiao.ipmsg.packet.Packet;
+import java.lang.ref.WeakReference;
 
 /**
  */
-public interface PacketListener {
+public abstract class Manager {
 
-    void processPacket(Packet packet) throws NotConnectedException, InterruptedException;
+    private final WeakReference<IPMsgConnection> weakConnection;
+
+    public Manager(IPMsgConnection connection) {
+        if (connection == null) {
+            throw new NullPointerException("Connection must not be null");
+        }
+
+        weakConnection = new WeakReference<IPMsgConnection>(connection);
+    }
+
+    protected final IPMsgConnection connection() {
+        return weakConnection.get();
+    }
 
 }

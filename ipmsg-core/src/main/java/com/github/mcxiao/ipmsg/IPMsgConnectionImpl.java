@@ -16,6 +16,8 @@
 
 package com.github.mcxiao.ipmsg;
 
+import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
+import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.address.IPAddressCache;
 import com.github.mcxiao.ipmsg.packet.Packet;
@@ -68,12 +70,12 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     }
 
     @Override
-    protected void sendInternal(Packet packet) throws InterruptedException, IPMsgException {
+    protected void sendInternal(Packet packet) throws NotConnectedException, ClientUnavailableException, InterruptedException {
         InetAddress toAddress = null;
         try {
             toAddress = packet.getTo().getInetAddress();
         } catch (UnknownHostException e) {
-            throw new IPMsgException.ClientUnavailableException("Address not available.", e);
+            throw new ClientUnavailableException("Address not available.", e);
         }
         datagramWriter.sendPacket(packet);
     }

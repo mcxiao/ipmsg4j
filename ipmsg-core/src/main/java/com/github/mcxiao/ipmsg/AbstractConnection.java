@@ -16,6 +16,8 @@
 
 package com.github.mcxiao.ipmsg;
 
+import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
+import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.address.BroadcastAddress;
 import com.github.mcxiao.ipmsg.packet.Command;
@@ -124,7 +126,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
     }
 
     @Override
-    public void sendPacket(Packet packet) throws InterruptedException, IPMsgException {
+    public void sendPacket(Packet packet) throws NotConnectedException, ClientUnavailableException, InterruptedException {
         if (packet == null) {
             throw new NullPointerException("Packet must not be null");
         }
@@ -276,7 +278,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
     protected abstract void shutdown();
 
     protected abstract void sendInternal(Packet packet)
-            throws InterruptedException, IPMsgException;
+            throws NotConnectedException, ClientUnavailableException, InterruptedException;
 
     protected void parseAndProcessPacket(String address, int port, byte[] msgBuf) throws Exception {
         Packet packet = null;
@@ -364,6 +366,8 @@ public abstract class AbstractConnection implements IPMsgConnection {
                 public void run() {
                     try {
                         listener.processPacket(packet);
+                    } catch (NotConnectedException ne) {
+                        LogUtil.warn(TAG, "NotConnectedException catch.", ne);
                     } catch (Exception e) {
                         LogUtil.warn(TAG, "Exception in async packet listener", e);
                     }
@@ -386,6 +390,8 @@ public abstract class AbstractConnection implements IPMsgConnection {
                 public void run() {
                     try {
                         listener.processPacket(packet);
+                    } catch (NotConnectedException ne) {
+                        LogUtil.warn(TAG, "NotConnectedException catch.", ne);
                     } catch (Exception e) {
                         LogUtil.warn(TAG, "Exception in sync packet listener", e);
                     }
@@ -442,9 +448,9 @@ public abstract class AbstractConnection implements IPMsgConnection {
         connectionListeners.remove(listener);
     }
 
-    protected void checkNotConnectedOrThrow(@Nullable String message) throws IPMsgException.NotConnectedException {
+    protected void checkNotConnectedOrThrow(@Nullable String message) throws NotConnectedException {
         if (!isConnected())
-            throw new IPMsgException.NotConnectedException(message);
+            throw new NotConnectedException(message);
     }
 
     protected void checkAlreadyConnectedOrThrow() throws IPMsgException.AlreadyConnectException {
