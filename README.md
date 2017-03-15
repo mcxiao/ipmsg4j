@@ -4,7 +4,7 @@ IPMsg4J
 
 About
 -----
-IPMsg4J is a Java implementation of [IP Messenger](A Send/Receive message service using the TCP/UDP Port).
+IPMsg4J is a Java implementation of [IP Messenger]  (A Send/Receive message service using the TCP/UDP Port).
 
 Getting started
 ---------------
@@ -13,6 +13,10 @@ coming soon
 Download
 --------
 coming soon
+
+Wiki
+----
+The IP Messenger protocol see [the website] (https://ipmsg.org/index.html.en) or [中文版在这里](https://github.com/mcxiao/wiki_zhCN/tree/master/ipmsg).
 
 License
 -------

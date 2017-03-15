@@ -16,7 +16,9 @@
 
 package com.github.mcxiao.ipmsg.packet;
 
+import com.github.mcxiao.ipmsg.IPMsgConnection;
 import com.github.mcxiao.ipmsg.address.Address;
+import com.github.mcxiao.ipmsg.util.PacketIdUtil;
 import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 
 /**
@@ -28,19 +30,20 @@ public class Packet implements Element {
     private final Command command;
     private final HostSub hostSub;
     private byte[] msgBuf;
-    private long timestamp;
+    private Long timestamp;
 
     private Address to;
     private Address from;
 
     public Packet(String version, String packetNo, Command command, HostSub hostSub) {
-        this.version = version;
-        this.packetNo = packetNo;
-        this.command = command;
-        this.hostSub = hostSub;
+        this(version, packetNo, command, hostSub, null);
     }
 
-    public Packet(String version, String packetNo, Command command, HostSub hostSub, byte[] msgBuf, long timestamp) {
+    public Packet(String version, String packetNo, Command command, HostSub hostSub, byte[] msgBuf) {
+        this(version, packetNo, command, hostSub, msgBuf, null);
+    }
+
+    public Packet(String version, String packetNo, Command command, HostSub hostSub, byte[] msgBuf, Long timestamp) {
         this.version = version;
         this.packetNo = packetNo;
         this.command = command;
@@ -118,4 +121,19 @@ public class Packet implements Element {
     public void setFrom(Address from) {
         this.from = from;
     }
+
+    public static Packet createByConnection(IPMsgConnection connection,
+                                            String packetNo, Command command) {
+        return createByConnection(connection, packetNo, command, null);
+    }
+
+    public static Packet createByConnection(IPMsgConnection connection,
+                                            String packetNo, Command command, byte[] msgBuf) {
+        return new Packet(connection.getVersion(), packetNo, command, connection.getHostSub(), msgBuf);
+    }
+
+    public static String generatePacketNo() {
+        return PacketIdUtil.newPacketId();
+    }
+
 }

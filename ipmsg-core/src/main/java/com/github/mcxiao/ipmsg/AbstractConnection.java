@@ -94,6 +94,11 @@ public abstract class AbstractConnection implements IPMsgConnection {
     }
 
     @Override
+    public String getVersion() {
+        return IPMsgProperties.VERSION_STRING;
+    }
+
+    @Override
     public String getSenderHost() {
         return hostSub.getSenderHost();
     }

@@ -24,6 +24,8 @@ import com.github.mcxiao.ipmsg.packet.Packet;
  */
 public interface IPMsgConnection {
 
+    String getVersion();
+
     String getSenderHost();
 
     String getSenderName();

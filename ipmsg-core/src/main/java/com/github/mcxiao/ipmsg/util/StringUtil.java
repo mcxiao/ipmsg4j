@@ -16,12 +16,38 @@
 
 package com.github.mcxiao.ipmsg.util;
 
+import java.util.UUID;
+
 /**
  */
 public final class StringUtil {
 
     public static boolean isNullOrEmpty(String string) {
         return string == null || string.length() == 0;
+    }
+
+    public static String getShortUuid() {
+        char[] chars = new char[]{'a', 'b', 'c', 'd', 'e', 'f',
+                'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+                't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5',
+                '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+                'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                'W', 'X', 'Y', 'Z' };
+
+        StringBuilder stringBuilder = new StringBuilder();
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        for (int i = 0; i < 8; i++) {
+            String str = uuid.substring(i * 4, i * 4 + 4);
+            int strInteger = Integer.parseInt(str, 16);
+            char ch = chars[strInteger % 0x3E];
+            stringBuilder.append(ch);
+        }
+
+        return stringBuilder.toString();
+    }
+
+    public static String getLowercaseShortUuid() {
+        return getShortUuid().toLowerCase();
     }
 
 }
