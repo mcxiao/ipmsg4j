@@ -56,7 +56,7 @@ public class Packet implements Element {
         // XXX 避免多次 array copy
         String bufString = String.format(PacketParseUtil.FORMATTER, version, packetNo,
                 hostSub.getSenderName(), hostSub.getSenderHost(), command.getCommand());
-        System.out.println(bufString);
+//        System.out.println(bufString);
         byte[] buf = bufString.getBytes();
         if (msgBuf == null) {
             msgBuf = new byte[0];

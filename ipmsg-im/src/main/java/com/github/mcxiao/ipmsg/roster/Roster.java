@@ -16,9 +16,17 @@
 
 package com.github.mcxiao.ipmsg.roster;
 
-import com.github.mcxiao.ipmsg.*;
+import com.github.mcxiao.ipmsg.AbstractConnectionListener;
+import com.github.mcxiao.ipmsg.ConnectCreationListener;
+import com.github.mcxiao.ipmsg.ConnectionRegistry;
+import com.github.mcxiao.ipmsg.IPMsgConnection;
+import com.github.mcxiao.ipmsg.IPMsgException;
 import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
 import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
+import com.github.mcxiao.ipmsg.IPMsgProtocol;
+import com.github.mcxiao.ipmsg.Manager;
+import com.github.mcxiao.ipmsg.PacketFilter;
+import com.github.mcxiao.ipmsg.PacketListener;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.address.BroadcastAddress;
 import com.github.mcxiao.ipmsg.packet.Command;
@@ -31,6 +39,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,6 +47,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Roster extends Manager {
 
     private final static String TAG = LogUtil.createTag(Roster.class.getSimpleName(), null);
+    
+    static {
+        ConnectionRegistry.addConnectionCreationListner(new ConnectCreationListener() {
+            @Override
+            public void connectionCreated(IPMsgConnection connection) {
+                getInstanceFor(connection);
+            }
+        });
+    }
+    
+    private static final Map<IPMsgConnection, Roster> INSTANCES = new WeakHashMap<>();
 
     private final static PacketFilter PRESENCE_PACKET_FILTER =
             new RosterPacketFilter();
@@ -51,13 +71,24 @@ public class Roster extends Manager {
     private final Set<RosterListener> rosterListeners =
             new LinkedHashSet<>();
 
+    private boolean loaded = false;
+    
     private final Object rosterListenersAndEntriesLock = new Object();
-
+    
     /**
      *
      */
     private final Map<Address, RosterEntry> entries = new ConcurrentHashMap<>();
 
+    public static Roster getInstanceFor(IPMsgConnection connection) {
+        Roster roster = INSTANCES.get(connection);
+        if (roster == null) {
+            roster = new Roster(connection);
+            INSTANCES.put(connection, roster);
+        }
+        return roster;
+    }
+    
     private Roster(IPMsgConnection connection) {
         super(connection);
 
@@ -67,6 +98,7 @@ public class Roster extends Manager {
             public void connected(IPMsgConnection connection) {
                 try {
                     broadcastEntry();
+                    
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -76,18 +108,18 @@ public class Roster extends Manager {
             public void connectionClosed() {
             }
         });
+        
         if (connection.isConnected()) {
             // XXX load roster
         }
     }
 
-    public void reload() {
-        // TODO: 2017/3/13 Impl method
+    public void reload() throws IPMsgException, InterruptedException {
+        broadcastEntry();
     }
 
     public boolean isLoaded() {
-        // TODO: 2017/3/13 Impl method
-        return false;
+        return loaded;
     }
 
     public Set<RosterEntry> getEntries() {
@@ -111,6 +143,14 @@ public class Roster extends Manager {
         synchronized (rosterListenersAndEntriesLock) {
             return rosterListeners.remove(listener);
         }
+    }
+    
+    public void absence(String status) {
+        // TODO: 2017/3/19 Impl method
+    }
+    
+    public void entry(String name, String host) {
+        // TODO: 2017/3/19 Impl method
     }
 
     private void fireRosterListener(Address addedEntry, Address updatedEntry,
@@ -158,7 +198,7 @@ public class Roster extends Manager {
     }
 
     /**
-     * @return If true when added roster entry packet.
+     * @return If true when already added roster entry packet.
      */
     private boolean addOrUpdateEntry(Packet packet) {
         Address from = packet.getFrom();
@@ -197,9 +237,9 @@ public class Roster extends Manager {
             switch (command.getMode()) {
                 case IPMsgProtocol.IPMSG_BR_ENTRY:
                     if (addOrUpdateEntry(packet)) {
-                        addedEntry = packet.getFrom();
-                    } else {
                         updatedEntry = packet.getFrom();
+                    } else {
+                        addedEntry = packet.getFrom();
                     }
 
                     try {
@@ -209,7 +249,11 @@ public class Roster extends Manager {
                     }
                     break;
                 case IPMsgProtocol.IPMSG_ANSENTRY:
-
+                    if (addOrUpdateEntry(packet)) {
+                        updatedEntry = packet.getFrom();
+                    } else {
+                        addedEntry = packet.getFrom();
+                    }
                     break;
                 case IPMsgProtocol.IPMSG_BR_ABSENCE:
 
