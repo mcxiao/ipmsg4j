@@ -8,11 +8,17 @@ IPMsg4J is a Java implementation of [IP Messenger]  (A Send/Receive message serv
 
 Getting started
 ---------------
-coming soon
+```java
+
+IPMsgConfiguration config = IPMsgConfiguration.create().setLocalHost(localHost);
+AbstractConnection connection = new IPMsgConnectionImpl(config);
+connection.connect();
+// TODO Use connection
+```
 
 Wiki
 ----
-The IP Messenger protocol see [the website] (https://ipmsg.org/index.html.en) or [中文版在这里](https://github.com/mcxiao/wiki_zhCN/tree/master/ipmsg).
+The IP Messenger protocol see [the website](https://ipmsg.org/index.html.en) or [中文版在这里](https://github.com/mcxiao/wiki_zhCN/tree/master/ipmsg).
 
 Download
 --------
