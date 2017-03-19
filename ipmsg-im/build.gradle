@@ -3,4 +3,8 @@ apply plugin: 'java'
 dependencies {
     compile project(":ipmsg-core")
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    testCompile project(":ipmsg-core")
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+
 }

@@ -293,7 +293,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         }
     }
 
-    private void processPacket(final Packet packet) throws InterruptedException {
+    protected void processPacket(final Packet packet) throws InterruptedException {
         assert (packet != null);
 
         executorService.executeBlocking(new Runnable() {
