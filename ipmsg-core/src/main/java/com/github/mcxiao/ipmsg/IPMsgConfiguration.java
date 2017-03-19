@@ -42,9 +42,9 @@ public class IPMsgConfiguration {
         setPort(IPMsgProtocol.PORT);
         setDatagramBodySize(IPMsgProperties.DATAGRAM_BODY_MAX_SIZE);
         setSupportFileAttach(false);
-        setSupportUtf8(false);
-        setSenderName("IPMessenger");
-        setSenderHost("IPMessageHost");
+        setSupportUtf8(IPMsgProperties.DEFAULT_UTF8_OPT);
+        setSenderName(IPMsgProperties.DEFAULT_SENDER_NAME);
+        setSenderHost(IPMsgProperties.DEFAULT_SENDER_HOST);
     }
 
     public int getPort() {

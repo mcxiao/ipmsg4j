@@ -37,5 +37,11 @@ public final class IPMsgProperties {
     public final static int DATAGRAM_BODY_SAFE_SIZE = 1400;
 
     public static String BROADCAST_ADDRESS = "255.255.255.255";
+    
+    public final static boolean DEFAULT_UTF8_OPT = true;
+    
+    public final static String DEFAULT_SENDER_NAME = "IPMessenger";
+    
+    public final static String DEFAULT_SENDER_HOST = "IPMessengerHost";
 
 }
