@@ -220,7 +220,8 @@ public class Roster extends Manager {
                                   @Nullable byte[] msgBuf)
             throws NotConnectedException, InterruptedException, ClientUnavailableException {
 
-        Packet packet = Packet.createByConnection(connection(), Packet.generatePacketNo(), command, msgBuf);
+//        Packet packet = Packet.createByConnection(connection(), Packet.generatePacketNo(), command, msgBuf);
+        Packet packet = new Packet(connection(), Packet.generatePacketNo(), command, msgBuf);
         packet.setTo(to);
         connection().sendPacket(packet);
     }

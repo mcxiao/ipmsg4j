@@ -42,11 +42,20 @@ public class Main {
         
         connection.connect();
         
+        waitWhenNotDone();
+    }
+    
+    static void waitWhenNotDone() throws InterruptedException {
         while (!done) {
             synchronized (MUTEX) {
                 MUTEX.wait();
             }
         }
+    }
+    
+    static void done() {
+        done = false;
+        MUTEX.notify();
     }
     
 }

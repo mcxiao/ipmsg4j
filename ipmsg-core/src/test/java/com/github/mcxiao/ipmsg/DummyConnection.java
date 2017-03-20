@@ -47,7 +47,7 @@ public class DummyConnection extends AbstractConnection {
     }
 
     @Override
-    protected void connectionInternal() throws InterruptedException, IPMsgException {
+    protected void connectInternal() throws InterruptedException, IPMsgException {
         connected = true;
     }
 

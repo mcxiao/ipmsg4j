@@ -19,8 +19,6 @@ package com.github.mcxiao.ipmsg;
 import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
 import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
 import com.github.mcxiao.ipmsg.address.Address;
-import com.github.mcxiao.ipmsg.address.BroadcastAddress;
-import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
@@ -240,10 +238,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
 
         setupLocalHostAndPort(this.config);
 
-        connectionInternal();
-
-        connected = true;
-        notifyConnectionConnected();
+        connectInternal();
 
         return this;
     }
@@ -251,6 +246,19 @@ public abstract class AbstractConnection implements IPMsgConnection {
     @Override
     public boolean isConnected() {
         return connected;
+    }
+    
+    /**
+     * Send the ENTRY packet when connect success.
+     * @param resumed If true when reconnect successfully.
+     */
+    protected void afterSuccessfulConnect(boolean resumed) {
+        connected = true;
+        notifyConnectionConnected();
+        
+        if (!resumed) {
+            // XXX send BR_ENTRY packet
+        }
     }
 
     public void disconnect() {
@@ -260,7 +268,11 @@ public abstract class AbstractConnection implements IPMsgConnection {
             LogUtil.fine(TAG, "Connection already disconnected.", e);
         }
     }
-
+    
+    /**
+     * Send EXIT packet and disconnect the connection.
+     * @param unavailablePacket The 'goodbye' packet
+     */
     public synchronized void disconnect(Packet unavailablePacket) throws IPMsgException {
         try {
             sendInternal(unavailablePacket);
@@ -273,7 +285,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         this.hostSub = null;
     }
 
-    protected abstract void connectionInternal() throws InterruptedException, IPMsgException;
+    protected abstract void connectInternal() throws InterruptedException, IPMsgException;
 
     protected abstract void shutdown();
 

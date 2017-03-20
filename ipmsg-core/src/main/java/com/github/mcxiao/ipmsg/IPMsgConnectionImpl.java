@@ -53,7 +53,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     }
 
     @Override
-    protected void connectionInternal() throws InterruptedException, IPMsgException {
+    protected void connectInternal() throws InterruptedException, IPMsgException {
         // Initialize connection and setup the reader and writer.
         connectUsingConfiguration();
 
@@ -62,6 +62,8 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
 //        // XXX Broadcast available packets
         initialSocketComplete.checkIfSuccessOrWait();
+        
+        afterSuccessfulConnect(false);
     }
 
     @Override
