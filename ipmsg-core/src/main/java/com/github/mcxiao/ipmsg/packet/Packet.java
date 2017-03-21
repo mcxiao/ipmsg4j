@@ -16,64 +16,60 @@
 
 package com.github.mcxiao.ipmsg.packet;
 
-import com.github.mcxiao.ipmsg.IPMsgConnection;
+import com.github.mcxiao.ipmsg.IPMsgProperties;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.util.PacketIdUtil;
 import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 
 /**
  */
-public class Packet implements Element {
+public abstract class Packet implements Element {
 
-    private final String packetNo;
-    private final String version;
-    private final Command command;
-    private final HostSub hostSub;
-    private byte[] msgBuf;
-    private Long timestamp;
+    protected final String packetNo;
+    protected final String version;
+    protected HostSub hostSub;
+    protected Command command;
 
-    private Address to;
-    private Address from;
-
-    public Packet(String version, String packetNo, Command command, HostSub hostSub) {
-        this(version, packetNo, command, hostSub, null);
+    protected Address to;
+    protected Address from;
+    
+    public Packet() {
+        this(IPMsgProperties.VERSION_STRING, generatePacketNo(), null);
     }
-
-    public Packet(String version, String packetNo, Command command, HostSub hostSub, byte[] msgBuf) {
-        this(version, packetNo, command, hostSub, msgBuf, null);
-    }
-
-    public Packet(String version, String packetNo, Command command, HostSub hostSub, byte[] msgBuf, Long timestamp) {
+    
+    public Packet(String version, String packetNo, HostSub hostSub) {
         this.version = version;
         this.packetNo = packetNo;
-        this.command = command;
         this.hostSub = hostSub;
-        this.msgBuf = msgBuf;
-        this.timestamp = timestamp;
     }
-
+    
     public byte[] toBytes() {
         // XXX 避免多次 array copy
         String bufString = String.format(PacketParseUtil.FORMATTER, version, packetNo,
-                hostSub.getSenderName(), hostSub.getSenderHost(), command.getCommand());
+                hostSub.getSenderName(), hostSub.getSenderHost());
 //        System.out.println(bufString);
         byte[] buf = bufString.getBytes();
-        if (msgBuf == null) {
-            msgBuf = new byte[0];
-        }
+        byte[] commandElementBytes = commandElementBytes();
 //        msgBuf = msgBuf == null ? new byte[] {IPMsgProtocol.EOL_BYTE} : msgBuf;
 
-        byte[] bytes = new byte[buf.length + msgBuf.length];
+        byte[] bytes = new byte[buf.length + commandElementBytes.length];
 
         System.arraycopy(buf, 0, bytes, 0, buf.length);
-        System.arraycopy(msgBuf, 0, bytes, buf.length, msgBuf.length);
+        System.arraycopy(commandElementBytes, 0, bytes, buf.length, commandElementBytes.length);
 
         // Add the eol byte
 //        bytes[bytes.length - 1] = IPMsgProtocol.EOL_BYTE;
 
         return bytes;
     }
-
+    
+    protected abstract byte[] commandElementBytes();
+    
+    @Override
+    public String toString() {
+        return new String(toBytes());
+    }
+    
     public String getPacketNo() {
         return packetNo;
     }
@@ -81,31 +77,23 @@ public class Packet implements Element {
     public String getVersion() {
         return version;
     }
-
-    public Command getCommand() {
-        return command;
-    }
-
+    
     public HostSub getHostSub() {
-        return hostSub;
+        return this.hostSub;
     }
-
-    public byte[] getMsgBuf() {
-        return msgBuf;
+    
+    public void setHostSub(HostSub hostSub) {
+        this.hostSub = hostSub;
     }
-
-    public void setMsgBuf(byte[] msgBuf) {
-        this.msgBuf = msgBuf;
+    
+    public Command getCommand() {
+        return this.command;
     }
-
-    public long getTimestamp() {
-        return timestamp;
+    
+    protected void setCommand(Command command) {
+        this.command = command;
     }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
+    
     public Address getTo() {
         return to;
     }
@@ -121,16 +109,16 @@ public class Packet implements Element {
     public void setFrom(Address from) {
         this.from = from;
     }
-
-    public static Packet createByConnection(IPMsgConnection connection,
-                                            String packetNo, Command command) {
-        return createByConnection(connection, packetNo, command, null);
-    }
-
-    public static Packet createByConnection(IPMsgConnection connection,
-                                            String packetNo, Command command, byte[] msgBuf) {
-        return new Packet(connection.getVersion(), packetNo, command, connection.getHostSub(), msgBuf);
-    }
+    
+//    public static Packet createByConnection(IPMsgConnection connection,
+//                                            String packetNo, Command command) {
+//        return createByConnection(connection, packetNo, command, null);
+//    }
+//
+//    public static Packet createByConnection(IPMsgConnection connection,
+//                                            String packetNo, Command command, byte[] msgBuf) {
+//        return new Packet(connection.getVersion(), packetNo, command, connection.getHostSub(), msgBuf);
+//    }
 
     public static String generatePacketNo() {
         return PacketIdUtil.newPacketId();

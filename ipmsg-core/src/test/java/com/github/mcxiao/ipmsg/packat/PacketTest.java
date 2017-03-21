@@ -38,30 +38,30 @@ public class PacketTest {
     String senderHost = "senderHost";
     byte[] msgBuf = new byte[]{0, 1};
 
-    @Test
-    public void testPacketToBytes() {
-
-        Packet packet = new Packet(version, packetNo,
-                new Command(command),
-                new HostSub(senderName, senderHost));
-        byte[] bytes = packet.toBytes();
-        Assert.assertArrayEquals(result2, bytes);
-        packet.setMsgBuf(msgBuf);
-        bytes = packet.toBytes();
-
-        Assert.assertArrayEquals(result, bytes);
-    }
-
-    @Test
-    public void testBytesToPacket() throws Exception {
-        Packet packet = PacketParseUtil.parsePacket("192.168.0.1", IPMsgProtocol.PORT, result);
-
-        Assert.assertEquals(version, packet.getVersion());
-        Assert.assertEquals(packetNo, packet.getPacketNo());
-        Assert.assertEquals(command, packet.getCommand().getCommand());
-        Assert.assertEquals(senderName, packet.getHostSub().getSenderName());
-        Assert.assertEquals(senderHost, packet.getHostSub().getSenderHost());
-        Assert.assertArrayEquals(msgBuf, packet.getMsgBuf());
-    }
+//    @Test
+//    public void testPacketToBytes() {
+//
+//        Packet packet = new Packet(version, packetNo,
+//                new Command(command),
+//                new HostSub(senderName, senderHost));
+//        byte[] bytes = packet.toBytes();
+//        Assert.assertArrayEquals(result2, bytes);
+//        packet.setMsgBuf(msgBuf);
+//        bytes = packet.toBytes();
+//
+//        Assert.assertArrayEquals(result, bytes);
+//    }
+//
+//    @Test
+//    public void testBytesToPacket() throws Exception {
+//        Packet packet = PacketParseUtil.parsePacket("192.168.0.1", IPMsgProtocol.PORT, result);
+//
+//        Assert.assertEquals(version, packet.getVersion());
+//        Assert.assertEquals(packetNo, packet.getPacketNo());
+//        Assert.assertEquals(command, packet.getCommand().getCommand());
+//        Assert.assertEquals(senderName, packet.getHostSub().getSenderName());
+//        Assert.assertEquals(senderHost, packet.getHostSub().getSenderHost());
+//        Assert.assertArrayEquals(msgBuf, packet.getMsgBuf());
+//    }
 
 }

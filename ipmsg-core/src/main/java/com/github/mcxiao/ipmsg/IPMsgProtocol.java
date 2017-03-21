@@ -43,13 +43,14 @@ public final class IPMsgProtocol {
     public final static int IPMSG_DEFAULT_PORT = 0x0979;
 
     /*  command  */
+    // Presence
     public final static int IPMSG_NOOPERATION = 0x00000000;
 
     public final static int IPMSG_BR_ENTRY = 0x00000001;
     public final static int IPMSG_BR_EXIT = 0x00000002;
     public final static int IPMSG_ANSENTRY = 0x00000003;
     public final static int IPMSG_BR_ABSENCE = 0x00000004;
-    public final static int IPMSG_BR_NOTIFY = IPMSG_BR_ABSENCE;
+//    public final static int IPMSG_BR_NOTIFY = IPMSG_BR_ABSENCE;
 
     public final static int IPMSG_BR_ISGETLIST = 0x00000010;
     public final static int IPMSG_OKGETLIST = 0x00000011;
@@ -57,12 +58,14 @@ public final class IPMsgProtocol {
     public final static int IPMSG_ANSLIST = 0x00000013;
     public final static int IPMSG_BR_ISGETLIST2 = 0x00000018;
 
+    // Message
     public final static int IPMSG_SENDMSG = 0x00000020;
     public final static int IPMSG_RECVMSG = 0x00000021;
     public final static int IPMSG_READMSG = 0x00000030;
     public final static int IPMSG_DELMSG = 0x00000031;
     public final static int IPMSG_ANSREADMSG = 0x00000032;
 
+    // IQ
     public final static int IPMSG_GETINFO = 0x00000040;
     public final static int IPMSG_SENDINFO = 0x00000041;
 
@@ -176,5 +179,12 @@ public final class IPMsgProtocol {
     public final static byte EOL_BYTE = '\n';
     public final static int PORT = 2425;
 
-    public final static int IPMSG_MESSAGE_FORMAT_ITEM_COUNT = 5;
+    public final static int MAX_PACKET_ITEM_COUNT = 6;
+    public final static int ITEM_VERSION_POSITION = 0;
+    public final static int ITEM_PACKET_NO_POSITION = 1;
+    public final static int ITEM_SENDER_NAME_POSITION = 2;
+    public final static int ITEM_SENDER_HOST_POSITION = 3;
+    public final static int ITEM_COMMAND_POSITION = 4;
+    public final static int ITEM_EXTENSION_POSITION = 5;
+    
 }
