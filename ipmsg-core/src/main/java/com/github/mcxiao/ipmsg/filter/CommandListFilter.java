@@ -23,10 +23,10 @@ import com.sun.istack.internal.NotNull;
 
 /**
  */
-public abstract class PacketCommandFilter implements PacketFilter {
+public abstract class CommandListFilter implements PacketFilter {
     private final int[] commands;
 
-    protected PacketCommandFilter() {
+    protected CommandListFilter() {
         this.commands = getCommands();
     }
 

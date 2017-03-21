@@ -16,14 +16,21 @@
 
 package com.github.mcxiao.ipmsg.util;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
  */
 public final class StringUtil {
 
+    public static final Locale DEFAULT_LANGUAGE = Locale.getDefault();
+    
     public static boolean isNullOrEmpty(String string) {
         return string == null || string.length() == 0;
+    }
+    
+    public static String format(String regex, Object... objects) {
+        return String.format(DEFAULT_LANGUAGE, regex, objects);
     }
 
     public static String getShortUuid() {

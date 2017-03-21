@@ -17,11 +17,11 @@
 package com.github.mcxiao.ipmsg.roster;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
-import com.github.mcxiao.ipmsg.filter.PacketCommandFilter;
+import com.github.mcxiao.ipmsg.filter.CommandListFilter;
 
 /**
  */
-public class RosterPacketFilter extends PacketCommandFilter {
+public class RosterPacketFilter extends CommandListFilter {
 
     @Override
     protected int[] getCommands() {
