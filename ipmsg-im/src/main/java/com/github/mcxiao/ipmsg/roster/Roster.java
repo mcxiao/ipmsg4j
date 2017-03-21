@@ -221,9 +221,9 @@ public class Roster extends Manager {
             throws NotConnectedException, InterruptedException, ClientUnavailableException {
 
 //        Packet packet = Packet.createByConnection(connection(), Packet.generatePacketNo(), command, msgBuf);
-        Packet packet = new Packet(connection(), Packet.generatePacketNo(), command, msgBuf);
-        packet.setTo(to);
-        connection().sendPacket(packet);
+//        Packet packet = new Packet(connection(), Packet.generatePacketNo(), command, msgBuf);
+//        packet.setTo(to);
+//        connection().sendPacket(packet);
     }
 
     private class PresencePacketListener implements PacketListener {

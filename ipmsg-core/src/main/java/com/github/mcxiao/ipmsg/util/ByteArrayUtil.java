@@ -16,6 +16,7 @@
 
 package com.github.mcxiao.ipmsg.util;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,5 +116,13 @@ public final class ByteArrayUtil {
         }
         return list;
     }
+    
+    public static byte[] toByteArray(int integer) {
+        return ByteBuffer.allocate(4).putInt(integer).array();
+    }
 
+    public static int toInteger(byte[] bytes) {
+        return ByteBuffer.wrap(bytes).getInt();
+    }
+    
 }
