@@ -41,6 +41,7 @@ public abstract class Packet implements Element {
         this.version = version;
         this.packetNo = packetNo;
         this.hostSub = hostSub;
+        this.command = new Command();
     }
     
     public byte[] toBytes() {

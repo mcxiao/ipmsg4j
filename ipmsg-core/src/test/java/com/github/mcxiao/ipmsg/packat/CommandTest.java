@@ -37,12 +37,12 @@ public class CommandTest {
     public void testCommand() {
         Command command = new Command();
         command.addOption(option);
-        command.setFunction(function);
+        command.setMode(function);
         Assert.assertEquals(code, command.getCommand());
 
         command.removeOption(option);
         command.addOption(optionB);
-        command.setFunction(functionB);
+        command.setMode(functionB);
         Assert.assertEquals(codeB, command.getCommand());
     }
 

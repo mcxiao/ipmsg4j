@@ -32,7 +32,7 @@ public class Command {
         this.command = command;
     }
 
-    public int setFunction(int code) {
+    public int setMode(int code) {
         code &= 0xff;
         command &= 0xffffff00;
         return command |= code;
@@ -66,6 +66,10 @@ public class Command {
 
     public boolean acceptOpt(int opt) {
         return IPMsgProtocol.ACCEPT_OPT(command, opt);
+    }
+    
+    public int addOrRemoveOpt(boolean boo, int opt) {
+        return boo ? addOption(opt) : removeOption(opt);
     }
 
 }
