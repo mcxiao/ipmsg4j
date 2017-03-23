@@ -34,7 +34,7 @@ import java.util.List;
 public final class PacketParseUtil {
     private final static String TAG = LogUtil.createTag(PacketParseUtil.class.getSimpleName(), null);
 
-    public final static String FORMATTER = "%s:%s:%s:%s:";
+    public final static String FORMATTER = "%s:%s:%s:%s:%d:";
     
     private final static int MAX_PACKET_ITEM_COUNT = IPMsgProtocol.MAX_PACKET_ITEM_COUNT;
 
@@ -107,14 +107,13 @@ public final class PacketParseUtil {
         return new HostSub(new String(nameBytes), new String(hostBytes));
     }
     
+    /**
+     * IPMsg parse command use it String type to byte array.
+     */
     public static Command parseCommand(byte[] bytes) throws Exception {
         ObjectUtil.requiredNonNull(bytes,  "Params can't be null.");
         
-        if (bytes.length > 4) {
-            throw new IllegalPacketFormatException("Command format error.");
-        }
-        
-        int code = ByteArrayUtil.toInteger(bytes);
+        int code = Integer.valueOf(new String(bytes));
         return new Command(code);
     }
     

@@ -21,6 +21,8 @@ import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.util.PacketIdUtil;
 import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 
+import java.nio.ByteBuffer;
+
 /**
  */
 public abstract class Packet implements Element {
@@ -57,24 +59,17 @@ public abstract class Packet implements Element {
     public byte[] toBytes() {
         // XXX 避免多次 array copy
         String bufString = String.format(PacketParseUtil.FORMATTER, version, packetNo,
-                hostSub.getSenderName(), hostSub.getSenderHost());
-//        System.out.println(bufString);
+                hostSub.getSenderName(), hostSub.getSenderHost(), command.getCommand());
         byte[] buf = bufString.getBytes();
-        byte[] commandElementBytes = commandElementBytes();
-//        msgBuf = msgBuf == null ? new byte[] {IPMsgProtocol.EOL_BYTE} : msgBuf;
-
-        byte[] bytes = new byte[buf.length + commandElementBytes.length];
-
-        System.arraycopy(buf, 0, bytes, 0, buf.length);
-        System.arraycopy(commandElementBytes, 0, bytes, buf.length, commandElementBytes.length);
-
-        // Add the eol byte
-//        bytes[bytes.length - 1] = IPMsgProtocol.EOL_BYTE;
-
-        return bytes;
+        byte[] commandElementBytes = extensionElementToBytes() == null ? new byte[0] : extensionElementToBytes();
+    
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + commandElementBytes.length);
+        byteBuffer.put(buf);
+        byteBuffer.put(commandElementBytes);
+        return byteBuffer.array();
     }
     
-    protected abstract byte[] commandElementBytes();
+    protected abstract byte[] extensionElementToBytes();
     
     @Override
     public String toString() {

@@ -2,6 +2,7 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.filter.MessageFilter;
+import com.github.mcxiao.ipmsg.util.StringUtil;
 
 import java.nio.ByteBuffer;
 
@@ -42,7 +43,11 @@ public class Message extends Packet {
     }
     
     @Override
-    protected byte[] commandElementBytes() {
+    protected byte[] extensionElementToBytes() {
+        if (StringUtil.isNullOrEmpty(extString)) {
+            return new byte[0];
+        }
+    
         byte[] extBytes;
         if (isUtf8Codec()) {
             // FIXME Specify the Utf8 charset
@@ -52,11 +57,7 @@ public class Message extends Packet {
             extBytes = extString.getBytes();
         }
         
-        // command is a int and take up 4 byte.
-        ByteBuffer buffer = ByteBuffer.allocate(4 + extBytes.length);
-        buffer.putInt(command.getCommand());
-        buffer.put(extBytes);
-        return buffer.array();
+        return extBytes;
     }
     
     public void setType(int type) {

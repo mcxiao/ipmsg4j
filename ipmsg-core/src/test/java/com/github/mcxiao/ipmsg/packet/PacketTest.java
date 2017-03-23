@@ -14,54 +14,37 @@
  * limitations under the License.
  */
 
+package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
-import com.github.mcxiao.ipmsg.packet.Command;
-import com.github.mcxiao.ipmsg.packet.HostSub;
+import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.util.PacketParseUtil;
-import com.github.mcxiao.ipmsg.packet.Packet;
+
 import org.junit.Assert;
 import org.junit.Test;
-package com.github.mcxiao.ipmsg.packet;
 
 public class PacketTest {
 
     byte[] result = new byte[]{49, 58, 49, 48, 48, 48, 58, 115, 101, 110, 100, 101, 114, 78, 97, 109, 101, 58, 115,
             101, 110, 100, 101, 114, 72, 111, 115, 116, 58, 49, 58, 0, 1};
-    byte[] result2 = new byte[]{49, 58, 49, 48, 48, 48, 58, 115, 101, 110, 100, 101, 114, 78, 97, 109, 101, 58, 115,
-            101, 110, 100, 101, 114, 72, 111, 115, 116, 58, 49, 58};
 
+    Address from = new Address("192.168.0.1", IPMsgProtocol.PORT);
+    
     String version = "1";
     String packetNo = "1000";
     int command = 1;
     String senderName = "senderName";
     String senderHost = "senderHost";
-    byte[] msgBuf = new byte[]{0, 1};
 
-//    @Test
-//    public void testPacketToBytes() {
-//
-//        Packet packet = new Packet(version, packetNo,
-//                new Command(command),
-//                new HostSub(senderName, senderHost));
-//        byte[] bytes = packet.toBytes();
-//        Assert.assertArrayEquals(result2, bytes);
-//        packet.setMsgBuf(msgBuf);
-//        bytes = packet.toBytes();
-//
-//        Assert.assertArrayEquals(result, bytes);
-//    }
-//
-//    @Test
-//    public void testBytesToPacket() throws Exception {
-//        Packet packet = PacketParseUtil.parsePacket("192.168.0.1", IPMsgProtocol.PORT, result);
-//
-//        Assert.assertEquals(version, packet.getVersion());
-//        Assert.assertEquals(packetNo, packet.getPacketNo());
-//        Assert.assertEquals(command, packet.getCommand().getCommand());
-//        Assert.assertEquals(senderName, packet.getHostSub().getSenderName());
-//        Assert.assertEquals(senderHost, packet.getHostSub().getSenderHost());
-//        Assert.assertArrayEquals(msgBuf, packet.getMsgBuf());
-//    }
+    @Test
+    public void testBytesToPacket() throws Exception {
+        Packet packet = PacketParseUtil.parsePacket(from, result);
+
+        Assert.assertEquals(version, packet.getVersion());
+        Assert.assertEquals(packetNo, packet.getPacketNo());
+        Assert.assertEquals(command, packet.getCommand().getCommand());
+        Assert.assertEquals(senderName, packet.getHostSub().getSenderName());
+        Assert.assertEquals(senderHost, packet.getHostSub().getSenderHost());
+    }
 
 }

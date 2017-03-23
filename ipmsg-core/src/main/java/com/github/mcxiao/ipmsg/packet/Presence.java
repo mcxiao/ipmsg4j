@@ -3,7 +3,7 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.filter.PresenceFilter;
-import com.github.mcxiao.ipmsg.util.ByteArrayUtil;
+import com.github.mcxiao.ipmsg.util.StringUtil;
 
 /**
  *
@@ -32,9 +32,21 @@ public final class Presence extends Packet {
     }
     
     @Override
-    protected byte[] commandElementBytes() {
-        byte[] commandBytes = ByteArrayUtil.toByteArray(command.getCommand());
-        return commandBytes;
+    protected byte[] extensionElementToBytes() {
+        if (StringUtil.isNullOrEmpty(extString)) {
+            return new byte[0];
+        }
+        
+        byte[] extBytes;
+        if (isSupportUtf8()) {
+            // FIXME Specify the Utf8 charset
+            extBytes = extString.getBytes();
+        } else {
+            // XXX Default charset is CP932
+            extBytes = extString.getBytes();
+        }
+    
+        return extBytes;
     }
     
     public int getType() {
