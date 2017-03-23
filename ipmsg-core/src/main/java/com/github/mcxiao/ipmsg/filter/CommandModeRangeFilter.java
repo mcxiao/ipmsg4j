@@ -14,7 +14,7 @@ public class CommandModeRangeFilter implements PacketFilter {
     protected final CommandGreaterFilter greaterFilter;
     
     public CommandModeRangeFilter(int le, int ge) {
-        if (le < ge) {
+        if (ge < le) {
             throw new IllegalStateException(
                     StringUtil.format("ge(%d) can't lower than le(%d)", le, ge));
         }

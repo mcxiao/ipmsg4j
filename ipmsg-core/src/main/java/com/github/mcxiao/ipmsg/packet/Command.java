@@ -71,5 +71,18 @@ public class Command {
     public int addOrRemoveOpt(boolean boo, int opt) {
         return boo ? addOption(opt) : removeOption(opt);
     }
-
+    
+    @Override
+    public String toString() {
+        return Integer.toHexString(command);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Command) {
+            Command other = (Command) obj;
+            return this.command == other.getCommand();
+        }
+        return false;
+    }
 }

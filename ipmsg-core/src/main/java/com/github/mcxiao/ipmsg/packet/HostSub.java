@@ -31,8 +31,7 @@ public class HostSub implements Element {
     }
 
     public byte[] toBytes() {
-        String sub = senderName + ":" + senderHost;
-        return sub.getBytes();
+        return toString().getBytes();
     }
 
     public String getSenderName() {
@@ -41,5 +40,15 @@ public class HostSub implements Element {
 
     public String getSenderHost() {
         return senderHost;
+    }
+    
+    @Override
+    public String toString() {
+        return senderName + ":" + senderHost;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof HostSub && obj.toString().equals(this.toString());
     }
 }
