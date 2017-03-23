@@ -19,20 +19,30 @@ package com.github.mcxiao.ipmsg;
 import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
 import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
 import com.github.mcxiao.ipmsg.address.Address;
+import com.github.mcxiao.ipmsg.address.BroadcastAddress;
 import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
+import com.github.mcxiao.ipmsg.packet.Presence;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
 import com.github.mcxiao.ipmsg.util.LogUtil;
 import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 import com.github.mcxiao.ipmsg.util.StringUtil;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
+
 import org.jivesoftware.smack.util.Async;
 import org.jivesoftware.smack.util.BoundedThreadPoolExecutor;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -125,11 +135,12 @@ public abstract class AbstractConnection implements IPMsgConnection {
 
     @Override
     public void sendPacket(Packet packet) throws NotConnectedException, ClientUnavailableException, InterruptedException {
-        if (packet == null) {
-            throw new NullPointerException("Packet must not be null");
-        }
+        Objects.requireNonNull(packet, "Packet can't be null.");
+        Objects.requireNonNull(packet.getTo(), "The packet used to send must set to.(Packet.setTo(Address))");
 
-        checkNotConnectedOrThrow(null);
+        checkNotConnectedOrThrow("Not connected. Send packet fail.");
+        
+        packet.setHostSub(getHostSub());
 
         // Interceptors may modify the content of the packet.
         firePacketInterceptors(packet);
@@ -252,18 +263,25 @@ public abstract class AbstractConnection implements IPMsgConnection {
      * Send the ENTRY packet when connect success.
      * @param resumed If true when reconnect successfully.
      */
-    protected void afterSuccessfulConnect(boolean resumed) {
+    protected void afterSuccessfulConnect(boolean resumed) throws NotConnectedException, InterruptedException, ClientUnavailableException {
         connected = true;
         notifyConnectionConnected();
         
         if (!resumed) {
-            // XXX send BR_ENTRY packet
+            Presence presence = new Presence(Presence.TYPE_BR_ENTRY);
+            presence.setTo(new BroadcastAddress(getPort()));
+            presence.setSupportUtf8(isSupportUtf8());
+            presence.setSupportFileAttach(isSupportFileAttach());
+            sendPacket(presence);
         }
     }
 
     public void disconnect() {
         try {
-            disconnect(null);       // XXX: 2017/3/6 Broadcast absence packet.
+            Presence exitPresence = new Presence(Presence.TYPE_BR_EXIT);
+            exitPresence.setTo(new BroadcastAddress(getPort()));
+            
+            disconnect(exitPresence);
         } catch (IPMsgException e) {
             LogUtil.fine(TAG, "Connection already disconnected.", e);
         }
@@ -275,7 +293,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
      */
     public synchronized void disconnect(Packet unavailablePacket) throws IPMsgException {
         try {
-            sendInternal(unavailablePacket);
+            sendPacket(unavailablePacket);
         } catch (Exception e) {
             LogUtil.fine(TAG, "Interrupted when disconnect the connection. Continuing.", e);
         }
@@ -317,13 +335,14 @@ public abstract class AbstractConnection implements IPMsgConnection {
     }
 
     private void setupLocalHostAndPort(IPMsgConfiguration config) throws IPMsgException.ConnectException {
-        InetAddress localHost;
         String localHostString = config.getLocalHost();
         if (StringUtil.isNullOrEmpty(localHostString)) {
             throw new IPMsgException.ConnectException("Localhost must set.");
         }
+        
         try {
-            localHost = InetAddress.getByName(localHostString);
+            // Assert localhostString available.
+            InetAddress.getByName(localHostString);
         } catch (UnknownHostException e) {
             throw new IPMsgException.ConnectException("Localhost unavailable.", e);
         }
