@@ -292,10 +292,10 @@ public abstract class AbstractConnection implements IPMsgConnection {
     protected abstract void sendInternal(Packet packet)
             throws NotConnectedException, ClientUnavailableException, InterruptedException;
 
-    protected void parseAndProcessPacket(String address, int port, byte[] msgBuf) throws Exception {
+    protected void parseAndProcessPacket(Address from, byte[] msgBuf) throws Exception {
         Packet packet = null;
         try {
-            packet = PacketParseUtil.parsePacket(address, port, msgBuf);
+            packet = PacketParseUtil.parsePacket(from, msgBuf);
         } catch (Exception e) {
             // TODO: 2017/3/6 Handle unparsable packet
             LogUtil.warn(TAG, "Unparsable packet, ignored.", e);

@@ -294,10 +294,10 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
                     // XXX Parse packets in another block-queue.
                     try {
-                        parseAndProcessPacket(
-                                datagramPacket.getAddress().getHostAddress(),
-                                datagramPacket.getPort(),
-                                datagramPacket.getData());
+                        Address from = new Address(datagramPacket.getAddress().getHostAddress(),
+                                datagramPacket.getPort());
+                        
+                        parseAndProcessPacket(from, datagramPacket.getData());
                     } catch (Exception e) {
                         LogUtil.warn(TAG, "Exception in parseAndProcessPacket, ignored.", e);
                     }

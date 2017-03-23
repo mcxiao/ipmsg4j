@@ -18,6 +18,7 @@ package com.github.mcxiao.ipmsg.util;
 
 import com.github.mcxiao.ipmsg.IPMsgException.IllegalPacketFormatException;
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
+import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.packet.Presence;
@@ -35,7 +36,7 @@ public final class PacketParseUtil {
     
     private final static int MAX_PACKET_ITEM_COUNT = IPMsgProtocol.MAX_PACKET_ITEM_COUNT;
 
-    public static Packet parsePacket(String from, int port, byte[] data) throws Exception {
+    public static Packet parsePacket(Address from, byte[] data) throws Exception {
         // XXX Need a performance update
         String version = null;
         String packetNo = null;
