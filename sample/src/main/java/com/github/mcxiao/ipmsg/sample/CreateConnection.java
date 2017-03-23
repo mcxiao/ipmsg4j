@@ -12,7 +12,7 @@ import com.github.mcxiao.ipmsg.roster.Roster;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class Main {
+public class CreateConnection {
     
     static final Object MUTEX = new Object();
     static boolean done = true;
@@ -30,6 +30,16 @@ public class Main {
             public void connected(IPMsgConnection connection) {
                 System.out.println("Connected!");
             }
+    
+            @Override
+            public void connectionClosed() {
+                System.out.println("Connection closed.");
+            }
+    
+            @Override
+            public void connectionClosedOnError(Exception e) {
+                e.printStackTrace();
+            }
         });
     
         Roster roster = Roster.getInstanceFor(connection);
@@ -42,7 +52,22 @@ public class Main {
         
         connection.connect();
         
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                
+                done();
+            }
+        }).start();
+        
         waitWhenNotDone();
+        
+        connection.disconnect();
     }
     
     static void waitWhenNotDone() throws InterruptedException {
@@ -54,8 +79,10 @@ public class Main {
     }
     
     static void done() {
-        done = false;
-        MUTEX.notify();
+        done = true;
+        synchronized (MUTEX) {
+            MUTEX.notify();
+        }
     }
     
 }

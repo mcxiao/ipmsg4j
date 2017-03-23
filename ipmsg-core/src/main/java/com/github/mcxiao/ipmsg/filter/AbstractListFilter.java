@@ -1,12 +1,12 @@
 package com.github.mcxiao.ipmsg.filter;
 
 import com.github.mcxiao.ipmsg.PacketFilter;
-import com.github.mcxiao.ipmsg.util.ObjectUtil;
 import com.sun.istack.internal.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -21,15 +21,15 @@ public abstract class AbstractListFilter implements PacketFilter {
     }
     
     protected AbstractListFilter(@NotNull PacketFilter... filters) {
-        ObjectUtil.requiredNonNull(filters, "Params must not be null.");
+        Objects.requireNonNull(filters, "Params must not be null.");
         for (PacketFilter filter : filters) {
-            ObjectUtil.requiredNonNull(filter, "Params must not be null.");
+            Objects.requireNonNull(filter, "Params must not be null.");
         }
         this.filters = new ArrayList<>(Arrays.asList(filters));
     }
     
     public void addFilter(@NotNull PacketFilter filter) {
-        ObjectUtil.requiredNonNull(filter, "Params must not be null.");
+        Objects.requireNonNull(filter, "Params must not be null.");
         filters.add(filter);
     }
     

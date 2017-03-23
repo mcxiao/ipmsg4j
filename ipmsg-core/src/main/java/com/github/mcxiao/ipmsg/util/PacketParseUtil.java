@@ -28,6 +28,7 @@ import com.github.mcxiao.ipmsg.packet.Presence;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  */
@@ -86,22 +87,22 @@ public final class PacketParseUtil {
     }
     
     public static String parseVersion(byte[] version) {
-        ObjectUtil.requiredNonNull(version, "Params can't be null.");
+        Objects.requireNonNull(version, "Params can't be null.");
     
         // XXX Character codes ?
         return new String(version);
     }
     
     public static String parsePacketNo(byte[] packetNo) {
-        ObjectUtil.requiredNonNull(packetNo, "Params can't be null.");
+        Objects.requireNonNull(packetNo, "Params can't be null.");
    
         // XXX Character codes ?
         return new String(packetNo);
     }
     
     public static HostSub parseHostSub(byte[] nameBytes, byte[] hostBytes) {
-        ObjectUtil.requiredNonNull(nameBytes, "Params can't be null.");
-        ObjectUtil.requiredNonNull(hostBytes, "Params can't be null.");
+        Objects.requireNonNull(nameBytes, "Params can't be null.");
+        Objects.requireNonNull(hostBytes, "Params can't be null.");
         
         // XXX Character codes ?
         return new HostSub(new String(nameBytes), new String(hostBytes));
@@ -111,7 +112,7 @@ public final class PacketParseUtil {
      * IPMsg parse command use it String type to byte array.
      */
     public static Command parseCommand(byte[] bytes) throws Exception {
-        ObjectUtil.requiredNonNull(bytes,  "Params can't be null.");
+        Objects.requireNonNull(bytes,  "Params can't be null.");
         
         int code = Integer.valueOf(new String(bytes));
         return new Command(code);
