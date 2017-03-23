@@ -45,9 +45,9 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     private DatagramPacketReader datagramReader;
     private DatagramPacketWriter datagramWriter;
 
-    private SimpleSynchronizationPoint<Exception> initialSocketComplete = new
-            SimpleSynchronizationPoint<>(IPMsgConnectionImpl.this, "initial socket complete");
-
+    private SimpleSynchronizationPoint<Exception> initialSocketComplete =
+            new SimpleSynchronizationPoint<>(IPMsgConnectionImpl.this, "initial socket complete");
+    
     public IPMsgConnectionImpl(IPMsgConfiguration configuration) {
         super(configuration);
         this.config = configuration;
@@ -55,6 +55,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
     @Override
     protected void connectInternal() throws InterruptedException, IPMsgException {
+        
         // Initialize connection and setup the reader and writer.
         connectUsingConfiguration();
 
@@ -113,24 +114,28 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             datagramWriter.shutdown(instant);
         }
         LogUtil.fine(TAG, "DatagramWriter has been shutdown.", null);
+    
         if (datagramReader != null) {
             LogUtil.fine(TAG, "DatagramReader shutdown()", null);
             datagramReader.shutdown();
         }
         LogUtil.fine(TAG, "DatagramReader has been shutdown.", null);
-
+    
         if (writerSocket != null) {
             writerSocket.close();
         }
+        LogUtil.fine(TAG, "WriterSocket has been shutdown.", null);
+        
         if (readerSocket != null) {
             readerSocket.close();
         }
-        LogUtil.fine(TAG, "WriterSocket and ReaderSocket has been shutdown.", null);
+        LogUtil.fine(TAG, "ReaderSocket has been shutdown.", null);
 
         connected = false;
         initialSocketComplete.init();
     }
 
+    @Deprecated
     protected InetAddress getInetAddress(String address) throws UnknownHostException {
         if (StringUtil.isNullOrEmpty(address))
             throw new UnknownHostException("Address can't be null or empty.");
@@ -143,10 +148,13 @@ public class IPMsgConnectionImpl extends AbstractConnection {
         private final ArrayBlockingQueueWithShutdown<Packet> queue =
                 new ArrayBlockingQueueWithShutdown<>(QUEUE_SIZE, true);
 
+        private SimpleSynchronizationPoint<NoResponseException> shutdownDone =
+                new SimpleSynchronizationPoint<>(IPMsgConnectionImpl.this, "PacketWriter shutdown completed");
         protected volatile Long shutdownTimestamp = null;
         protected volatile boolean instantShutdown = false;
 
         void init() {
+            shutdownDone.init();
             shutdownTimestamp = null;
 
             queue.start();
@@ -216,7 +224,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
                     LogUtil.fine(TAG, "Ignoring Exception in writePacket()", e);
                 }
             } finally {
-                // TODO: 2017/2/28
+                shutdownDone.reportSuccess();
             }
 
             if (writerException != null) {
@@ -248,6 +256,11 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             instantShutdown = instant;
             queue.shutdown();
             shutdownTimestamp = System.currentTimeMillis();
+            try {
+                shutdownDone.checkIfSuccessOrWait();
+            } catch (NoResponseException | InterruptedException e) {
+                LogUtil.warn(TAG, "Shutdown throws exception in packet writer", e);
+            }
         }
 
     }
@@ -287,11 +300,15 @@ public class IPMsgConnectionImpl extends AbstractConnection {
                 while (!done()) {
                     byte[] bytes = new byte[bufferSize];
                     DatagramPacket datagramPacket = new DatagramPacket(bytes, bytes.length);
-//                    try {
-                    readerSocket.receive(datagramPacket);
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
+                    try {
+                        readerSocket.receive(datagramPacket);
+                    } catch (IOException e) {
+                        if (!(done() || datagramWriter.queue.isShutdown())) {
+                            throw new IPMsgException.ConnectException(
+                                    "DatagramSocket throws exception when wait for receive packet.", e);
+                        }
+                        break;
+                    }
 
                     // XXX Parse packets in another block-queue.
                     try {
@@ -303,7 +320,9 @@ public class IPMsgConnectionImpl extends AbstractConnection {
                         LogUtil.warn(TAG, "Exception in parseAndProcessPacket, ignored.", e);
                     }
                 }
+                
             } catch (Exception e) {
+                
                 if (!(done() || datagramWriter.queue.isShutdown())) {
                     notifyConnectionClosedOnError(e);
                 }

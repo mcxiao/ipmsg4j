@@ -115,5 +115,17 @@ public class SimpleSynchronizationPoint<E extends Exception> {
             connectionLock.unlock();
         }
     }
+    
+    public void reportFailure(E failureException) {
+        assert failureException != null;
+        
+        try {
+            state = STATE_FAILURE;
+            this.failureException = failureException;
+            condition.signalAll();
+        } finally {
+            connectionLock.unlock();
+        }
+    }
 
 }
