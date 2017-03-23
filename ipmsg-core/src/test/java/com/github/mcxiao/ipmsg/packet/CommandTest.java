@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.github.mcxiao.ipmsg.packat;
+package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
-import com.github.mcxiao.ipmsg.packet.Command;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,6 +44,14 @@ public class CommandTest {
         command.addOption(optionB);
         command.setMode(functionB);
         Assert.assertEquals(codeB, command.getCommand());
+     
+        command = new Command(function);
+        command.addOrRemoveOpt(false, option);
+        Assert.assertEquals(function, command.getCommand());
+        command.addOrRemoveOpt(true, option);
+        Assert.assertEquals(code, command.getCommand());
+        command.addOrRemoveOpt(false, option);
+        Assert.assertEquals(function, command.getCommand());
     }
 
 }

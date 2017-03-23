@@ -45,7 +45,7 @@ public class Command {
 
     public int removeOption(int code) {
         code &= 0xffffff00;
-        return command ^= code;
+        return acceptOpt(code) ? command ^= code : command;
     }
 
     public int getCommand() {

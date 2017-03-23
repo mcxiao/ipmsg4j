@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-package com.github.mcxiao.ipmsg.packat;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.packet.Command;
@@ -23,6 +22,7 @@ import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import org.junit.Assert;
 import org.junit.Test;
+package com.github.mcxiao.ipmsg.packet;
 
 public class PacketTest {
 
