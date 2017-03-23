@@ -29,6 +29,7 @@ public abstract class Packet implements Element {
     protected final String version;
     protected HostSub hostSub;
     protected Command command;
+    protected String extString;
 
     protected Address to;
     protected Address from;
@@ -37,11 +38,20 @@ public abstract class Packet implements Element {
         this(IPMsgProperties.VERSION_STRING, generatePacketNo(), null);
     }
     
+    public Packet(Command command) {
+        this(IPMsgProperties.VERSION_STRING, generatePacketNo(), null);
+        this.command = command;
+    }
+    
     public Packet(String version, String packetNo, HostSub hostSub) {
+        this(version, packetNo, hostSub, new Command());
+    }
+    
+    public Packet(String version, String packetNo, HostSub hostSub, Command command) {
         this.version = version;
         this.packetNo = packetNo;
         this.hostSub = hostSub;
-        this.command = new Command();
+        this.command = command;
     }
     
     public byte[] toBytes() {
@@ -93,6 +103,14 @@ public abstract class Packet implements Element {
     
     protected void setCommand(Command command) {
         this.command = command;
+    }
+    
+    protected String getExtString() {
+        return extString;
+    }
+    
+    protected void setExtString(String extString) {
+        this.extString = extString;
     }
     
     public Address getTo() {

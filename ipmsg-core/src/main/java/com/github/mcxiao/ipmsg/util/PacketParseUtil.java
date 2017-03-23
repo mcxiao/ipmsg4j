@@ -20,6 +20,8 @@ import com.github.mcxiao.ipmsg.IPMsgException.IllegalPacketFormatException;
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.packet.Command;
+import com.github.mcxiao.ipmsg.packet.HostSub;
+import com.github.mcxiao.ipmsg.packet.Message;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.packet.Presence;
 
@@ -38,12 +40,6 @@ public final class PacketParseUtil {
 
     public static Packet parsePacket(Address from, byte[] data) throws Exception {
         // XXX Need a performance update
-        String version = null;
-        String packetNo = null;
-        String senderName = null;
-        String senderHost = null;
-        int commandCode = -1;
-        byte[] ext = null;
 
         byte[] pattern = new byte[]{IPMsgProtocol.SEPARATOR_BYTE};
         List<byte[]> decodeData = new ArrayList<>(MAX_PACKET_ITEM_COUNT);
@@ -62,14 +58,53 @@ public final class PacketParseUtil {
             }
         }
     
-        // TODO: 2017/3/21 Parse packet according commandCode.
+    
+        String version = parseVersion(decodeData.get(IPMsgProtocol.ITEM_VERSION_POSITION));
+        String packetNo = parsePacketNo(decodeData.get(IPMsgProtocol.ITEM_PACKET_NO_POSITION));
+        HostSub hostSub = parseHostSub(decodeData.get(IPMsgProtocol.ITEM_SENDER_NAME_POSITION),
+                decodeData.get(IPMsgProtocol.ITEM_SENDER_HOST_POSITION));
+        String extString = null;
+        if (IPMsgProtocol.ITEM_EXTENSION_POSITION < decodeData.size()) {
+            extString = parseExtensionString(decodeData.get(IPMsgProtocol.ITEM_EXTENSION_POSITION));
+        }
+        
         Command command = parseCommand(decodeData.get(IPMsgProtocol.ITEM_COMMAND_POSITION));
         if (Presence.PRESENCE_FILTER.accept(command)) {
-            return parsePresence(command, decodeData);
-//        } else if () {    // TODO: Parse IQ and Message
+            Presence presence = new Presence(version, packetNo, hostSub, command);
+            presence.setExtString(extString);
+            presence.setFrom(from);
+            return presence;
+        } else if (Message.MESSAGE_FILTER.accept(command)) {
+            Message message = new Message(version, packetNo, hostSub, command);
+            message.setExtString(extString);
+            message.setFrom(from);
+            return message;
+//        } else if () {    // TODO: Parse IQ
         }
         
         throw new IllegalPacketFormatException("Can't parse data.");
+    }
+    
+    public static String parseVersion(byte[] version) {
+        ObjectUtil.requiredNonNull(version, "Params can't be null.");
+    
+        // XXX Character codes ?
+        return new String(version);
+    }
+    
+    public static String parsePacketNo(byte[] packetNo) {
+        ObjectUtil.requiredNonNull(packetNo, "Params can't be null.");
+   
+        // XXX Character codes ?
+        return new String(packetNo);
+    }
+    
+    public static HostSub parseHostSub(byte[] nameBytes, byte[] hostBytes) {
+        ObjectUtil.requiredNonNull(nameBytes, "Params can't be null.");
+        ObjectUtil.requiredNonNull(hostBytes, "Params can't be null.");
+        
+        // XXX Character codes ?
+        return new HostSub(new String(nameBytes), new String(hostBytes));
     }
     
     public static Command parseCommand(byte[] bytes) throws Exception {
@@ -83,17 +118,9 @@ public final class PacketParseUtil {
         return new Command(code);
     }
     
-    public static Presence parsePresence(Command command, List<byte[]> bytes) {
-        // XXX assert command is a Presence Command
-        ObjectUtil.requiredNonNull(command, "Params can't be null.");
-        ObjectUtil.requiredNonNull(bytes, "Params can't be null.");
-    
-        Presence presence = new Presence(command.getMode());
-        presence.setSupportFileAttach(command.acceptOpt(IPMsgProtocol.IPMSG_FILEATTACHOPT));
-        presence.setSupportUtf8(command.acceptOpt(IPMsgProtocol.IPMSG_UTF8OPT));
-        // XXX Other Presence.field extension by future.
-        
-        return presence;
+    public static String parseExtensionString(byte[] ext) {
+        // XXX Character codes ?
+        return new String(ext);
     }
 
 }
