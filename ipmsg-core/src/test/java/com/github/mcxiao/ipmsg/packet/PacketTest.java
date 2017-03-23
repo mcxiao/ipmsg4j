@@ -46,5 +46,14 @@ public class PacketTest {
         Assert.assertEquals(senderName, packet.getHostSub().getSenderName());
         Assert.assertEquals(senderHost, packet.getHostSub().getSenderHost());
     }
+    
+    public static void assertPacketStatus(Packet expected, Packet actual) {
+        Assert.assertEquals(expected.getExtString(), actual.getExtString());
+        Assert.assertEquals(expected.getCommand(), actual.getCommand());
+        Assert.assertEquals(expected.getHostSub(), actual.getHostSub());
+        Assert.assertEquals(expected.getPacketNo(), actual.getPacketNo());
+        Assert.assertEquals(expected.getVersion(), actual.getVersion());
+        Assert.assertEquals(expected.getFrom(), actual.getFrom());
+    }
 
 }
