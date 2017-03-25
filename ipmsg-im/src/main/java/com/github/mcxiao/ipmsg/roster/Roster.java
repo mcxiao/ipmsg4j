@@ -28,9 +28,9 @@ import com.github.mcxiao.ipmsg.Manager;
 import com.github.mcxiao.ipmsg.PacketFilter;
 import com.github.mcxiao.ipmsg.PacketListener;
 import com.github.mcxiao.ipmsg.address.Address;
-import com.github.mcxiao.ipmsg.address.BroadcastAddress;
 import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.Packet;
+import com.github.mcxiao.ipmsg.packet.Presence;
 import com.github.mcxiao.ipmsg.util.LogUtil;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
@@ -97,7 +97,6 @@ public class Roster extends Manager {
             @Override
             public void connected(IPMsgConnection connection) {
                 try {
-                    broadcastEntry();
                     
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -109,13 +108,9 @@ public class Roster extends Manager {
             }
         });
         
-        if (connection.isConnected()) {
-            // XXX load roster
-        }
     }
 
     public void reload() throws IPMsgException, InterruptedException {
-        broadcastEntry();
     }
 
     public boolean isLoaded() {
@@ -179,24 +174,6 @@ public class Roster extends Manager {
         return entry;
     }
 
-    private Command buildRosterCommand(int mode) {
-        Command command = new Command(mode);
-        if (connection().isSupportFileAttach()) {
-            command.addOption(IPMsgProtocol.IPMSG_FILEATTACHOPT);
-        }
-        if (connection().isSupportUtf8()) {
-            command.addOption(IPMsgProtocol.IPMSG_CAPUTF8OPT);
-        }
-
-        return command;
-    }
-
-    private void broadcastEntry() throws NotConnectedException, InterruptedException, ClientUnavailableException {
-        Command command = buildRosterCommand(IPMsgProtocol.IPMSG_BR_ENTRY);
-        sendRosterPacket(new BroadcastAddress(connection().getPort()), command, null);
-        // TODO: 2017/3/15 some operate
-    }
-
     /**
      * @return If true when already added roster entry packet.
      */
@@ -216,51 +193,64 @@ public class Roster extends Manager {
 
     }
 
-    private void sendRosterPacket(@NotNull Address to, @NotNull Command command,
-                                  @Nullable byte[] msgBuf)
+    private void sendRosterPacket(@NotNull int type, @NotNull Address to,
+                                  @Nullable String extString)
             throws NotConnectedException, InterruptedException, ClientUnavailableException {
-
-//        Packet packet = Packet.createByConnection(connection(), Packet.generatePacketNo(), command, msgBuf);
-//        Packet packet = new Packet(connection(), Packet.generatePacketNo(), command, msgBuf);
-//        packet.setTo(to);
-//        connection().sendPacket(packet);
+        Presence presence = buildPresence(type, to);
+        presence.setExtString(extString);
+        
+        connection().sendPacket(presence);
+    }
+    
+    private Presence buildPresence(int type, Address to) {
+        Presence presence = new Presence(type);
+        presence.setSupportFileAttach(connection().isSupportFileAttach());
+        presence.setSupportUtf8(connection().isSupportUtf8());
+        presence.setTo(to);
+        
+        return presence;
     }
 
     private class PresencePacketListener implements PacketListener {
 
         @Override
         public void processPacket(Packet packet) throws NotConnectedException, InterruptedException {
-            Command command = packet.getCommand();
+            if (!(packet instanceof Presence)) {
+                return;
+            }
+            
+            Presence presence = (Presence) packet;
+            Command command = presence.getCommand();
             Address addedEntry = null;
             Address updatedEntry = null;
             Address deletedEntry = null;
 
             switch (command.getMode()) {
                 case IPMsgProtocol.IPMSG_BR_ENTRY:
-                    if (addOrUpdateEntry(packet)) {
-                        updatedEntry = packet.getFrom();
+                    if (addOrUpdateEntry(presence)) {
+                        updatedEntry = presence.getFrom();
                     } else {
-                        addedEntry = packet.getFrom();
+                        addedEntry = presence.getFrom();
                     }
 
                     try {
-                        sendRosterPacket(packet.getFrom(), buildRosterCommand(IPMsgProtocol.IPMSG_ANSENTRY), null);
+                        sendRosterPacket(Presence.TYPE_BR_ANSENTRY, presence.getFrom(), null);
                     } catch (Exception e) {
                         LogUtil.warn(TAG, "PresencePacketListener.processPacket send IPMSG_ANSENTRY fail.", e);
                     }
                     break;
                 case IPMsgProtocol.IPMSG_ANSENTRY:
-                    if (addOrUpdateEntry(packet)) {
-                        updatedEntry = packet.getFrom();
+                    if (addOrUpdateEntry(presence)) {
+                        updatedEntry = presence.getFrom();
                     } else {
-                        addedEntry = packet.getFrom();
+                        addedEntry = presence.getFrom();
                     }
                     break;
                 case IPMsgProtocol.IPMSG_BR_ABSENCE:
 
                     break;
                 case IPMsgProtocol.IPMSG_BR_EXIT:
-
+                    deletedEntry = presence.getFrom();
                     break;
             }
 
