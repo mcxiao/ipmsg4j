@@ -25,12 +25,43 @@ import java.net.UnknownHostException;
  */
 public class TestIPMsgConnection {
 
+    boolean done = false;
+    final Object mutex = new Object();
+
     @Test
     public void testSessionCreate() throws UnknownHostException, IPMsgException, InterruptedException {
-        IPMsgConfiguration configuration = IPMsgConfiguration.create()
-                .setLocalHost(InetAddress.getLocalHost().getHostAddress());
+        IPMsgConfiguration configuration = new IPMsgConfiguration.Builder()
+                .setLocalHost(InetAddress.getLocalHost().getHostAddress()).build();
         IPMsgConnectionImpl session = new IPMsgConnectionImpl(configuration);
+        session.addConnectionListener(new AbstractConnectionListener() {
+            @Override
+            public void connected(IPMsgConnection connection) {
+                super.connected(connection);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(3 * 1000);
+                            done = true;
+                            synchronized (mutex) {
+                                mutex.notifyAll();
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+        });
+
         session.connect();
+
+        while (!done) {
+            synchronized (mutex) {
+                mutex.wait();
+            }
+        }
+
     }
 
 }

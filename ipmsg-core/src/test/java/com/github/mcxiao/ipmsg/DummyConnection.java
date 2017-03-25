@@ -14,9 +14,6 @@ package com.github.mcxiao.ipmsg;/*
  * limitations under the License.
  */
 
-import com.github.mcxiao.ipmsg.AbstractConnection;
-import com.github.mcxiao.ipmsg.IPMsgConfiguration;
-import com.github.mcxiao.ipmsg.IPMsgException;
 import com.github.mcxiao.ipmsg.packet.Element;
 import com.github.mcxiao.ipmsg.packet.Packet;
 
@@ -31,11 +28,11 @@ public class DummyConnection extends AbstractConnection {
     private final BlockingQueue<Element> queue = new LinkedBlockingQueue<>();
 
     public static IPMsgConfiguration buildConfiguration() {
-        return IPMsgConfiguration.create()
+        return new IPMsgConfiguration.Builder()
                 .setSenderHost("DummyHost")
                 .setSenderName("DummyName")
                 .setSupportFileAttach(true)
-                .setSupportUtf8(true);
+                .setSupportUtf8(true).build();
     }
 
     public DummyConnection() {

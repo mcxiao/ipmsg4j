@@ -21,8 +21,8 @@ public class CreateConnection {
         done = false;
         
         InetAddress localHost = InetAddress.getLocalHost();
-        IPMsgConfiguration config = IPMsgConfiguration.create()
-                .setLocalHost(localHost.getHostAddress());
+        IPMsgConfiguration config = new IPMsgConfiguration.Builder()
+                .setLocalHost(localHost.getHostAddress()).build();
     
         AbstractConnection connection = new IPMsgConnectionImpl(config);
         connection.addConnectionListener(new AbstractConnectionListener(){
