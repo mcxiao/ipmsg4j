@@ -24,6 +24,7 @@ import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Message;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.packet.Presence;
+import com.github.mcxiao.ipmsg.packet.UndefinedPacket;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,9 +82,12 @@ public final class PacketParseUtil {
             message.setFrom(from);
             return message;
 //        } else if () {    // TODO: Parse IQ
+        } else {
+            UndefinedPacket packet = new UndefinedPacket(version, packetNo, hostSub, command);
+            packet.setExtString(extString);
+            packet.setFrom(from);
+            return packet;
         }
-        
-        throw new IllegalPacketFormatException("Can't parse data.");
     }
     
     public static String parseVersion(byte[] version) {
