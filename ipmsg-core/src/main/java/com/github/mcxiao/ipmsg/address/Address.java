@@ -51,8 +51,6 @@ public class Address {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
         if (obj instanceof Address) {
             Address anotherAddress = (Address) obj;
             String address = anotherAddress.getAddress();
@@ -63,7 +61,12 @@ public class Address {
 
         return false;
     }
-
+    
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+    
     @Override
     public String toString() {
         return address + ":" + port;

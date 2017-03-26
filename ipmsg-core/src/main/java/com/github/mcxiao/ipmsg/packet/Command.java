@@ -85,4 +85,9 @@ public class Command {
         }
         return false;
     }
+    
+    @Override
+    public int hashCode() {
+        return command;
+    }
 }

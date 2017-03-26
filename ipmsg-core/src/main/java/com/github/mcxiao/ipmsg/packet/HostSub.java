@@ -51,4 +51,9 @@ public class HostSub implements Element {
     public boolean equals(Object obj) {
         return obj instanceof HostSub && obj.toString().equals(this.toString());
     }
+    
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
 }
