@@ -3,6 +3,7 @@ package com.github.mcxiao.ipmsg.filter;
 import com.github.mcxiao.ipmsg.PacketFilter;
 import com.github.mcxiao.ipmsg.packet.Packet;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.Objects;
 
 /**
@@ -15,6 +16,11 @@ public abstract class PacketTypeFilter<P extends Packet> implements PacketFilter
     
     public PacketTypeFilter(Class<P> packetType) {
         this.packetType = Objects.requireNonNull(packetType, "PacketType can't be null.");
+    }
+    
+    @SuppressWarnings("unchecked")
+    public PacketTypeFilter() {
+        packetType = (Class<P>) ((ParameterizedType)getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
     
     @Override
