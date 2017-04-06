@@ -20,12 +20,15 @@ import com.github.mcxiao.ipmsg.IPMsgException.ClientUnavailableException;
 import com.github.mcxiao.ipmsg.IPMsgException.NotConnectedException;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.address.BroadcastAddress;
+import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
+import com.github.mcxiao.ipmsg.packet.PacketParseUtil;
 import com.github.mcxiao.ipmsg.packet.Presence;
+import com.github.mcxiao.ipmsg.packet.extension.PresenceExtensionProvider;
+import com.github.mcxiao.ipmsg.provider.ProviderManager;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
 import com.github.mcxiao.ipmsg.util.LogUtil;
-import com.github.mcxiao.ipmsg.util.PacketParseUtil;
 import com.github.mcxiao.ipmsg.util.StringUtil;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
@@ -101,8 +104,16 @@ public abstract class AbstractConnection implements IPMsgConnection {
     protected AbstractConnection(IPMsgConfiguration configuration) {
         this.config = configuration;
         hostSub = new HostSub(config.getSenderName(), config.getSenderHost());
+        addProviders();
     }
-
+    
+    private void addProviders() {
+        PresenceExtensionProvider presenceExtensionProvider = new PresenceExtensionProvider();
+        ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_BR_ABSENCE), presenceExtensionProvider);
+        ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_BR_ENTRY), presenceExtensionProvider);
+        ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_ANSENTRY), presenceExtensionProvider);
+    }
+    
     @Override
     public String getVersion() {
         return IPMsgProperties.VERSION_STRING;
