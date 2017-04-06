@@ -3,7 +3,6 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.filter.PresenceFilter;
-import com.github.mcxiao.ipmsg.util.StringUtil;
 
 /**
  *
@@ -29,24 +28,6 @@ public final class Presence extends Packet {
         super(version, packetNo, hostSub, command);
         // TODO Don't use the command.mode value to switch this.Type value.
         setType(command.getMode());
-    }
-    
-    @Override
-    protected byte[] extensionElementToBytes() {
-        if (StringUtil.isNullOrEmpty(extString)) {
-            return new byte[0];
-        }
-        
-        byte[] extBytes;
-        if (isSupportUtf8()) {
-            // FIXME Specify the Utf8 charset
-            extBytes = extString.getBytes();
-        } else {
-            // XXX Default charset is CP932
-            extBytes = extString.getBytes();
-        }
-    
-        return extBytes;
     }
     
     public int getType() {
@@ -87,13 +68,7 @@ public final class Presence extends Packet {
         command.addOrRemoveOpt(supportUtf8, IPMsgProtocol.IPMSG_CAPUTF8OPT);
     }
     
-    @Override
-    public void setExtString(String extString) {
-        super.setExtString(extString);
-    }
-    
-    @Override
-    public String getExtString() {
-        return super.getExtString();
+    public boolean isAbsence() {
+        return command.acceptOpt(IPMsgProtocol.IPMSG_ABSENCEOPT);
     }
 }

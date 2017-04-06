@@ -22,17 +22,8 @@ public class UndefinedPacket extends Packet {
     }
     
     @Override
-    protected byte[] extensionElementToBytes() {
-        return new byte[0];
+    public ExtensionElement getExtension() {
+        return null;
     }
-    
-    @Override
-    public void setExtString(String extString) {
-        super.setExtString(extString);
-    }
-    
-    @Override
-    public String getExtString() {
-        return super.getExtString();
-    }
+
 }

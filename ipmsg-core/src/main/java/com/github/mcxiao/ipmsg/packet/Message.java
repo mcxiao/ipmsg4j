@@ -4,8 +4,6 @@ import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.filter.MessageFilter;
 import com.github.mcxiao.ipmsg.util.StringUtil;
 
-import java.nio.ByteBuffer;
-
 /**
  *
  */
@@ -17,7 +15,7 @@ public class Message extends Packet {
     
     public final static int CHECK_NONE = 0;
     public final static int CHECK_SEND = IPMsgProtocol.IPMSG_SENDCHECKOPT;
-    public final static int CHECK_RECV = IPMsgProtocol.IPMSG_READCHECKOPT;
+    public final static int CHECK_READ = IPMsgProtocol.IPMSG_READCHECKOPT;
     
     public final static MessageFilter MESSAGE_FILTER = new MessageFilter();
     
@@ -36,28 +34,16 @@ public class Message extends Packet {
         setType(type);
     }
     
+    public Message(int type, int checkMode) {
+        super();
+        setType(type);
+        setCheckMode(checkMode);
+    }
+    
     public Message(String version, String packetNo, HostSub hostSub, Command command) {
         super(version, packetNo, hostSub, command);
         // TODO Don't use the command.mode value to switch this.Type value.
         setType(command.getMode());
-    }
-    
-    @Override
-    protected byte[] extensionElementToBytes() {
-        if (StringUtil.isNullOrEmpty(extString)) {
-            return new byte[0];
-        }
-    
-        byte[] extBytes;
-        if (isUtf8Codec()) {
-            // FIXME Specify the Utf8 charset
-            extBytes = extString.getBytes();
-        } else {
-            // XXX Default charset is CP932
-            extBytes = extString.getBytes();
-        }
-        
-        return extBytes;
     }
     
     public void setType(int type) {
@@ -69,14 +55,37 @@ public class Message extends Packet {
                 command.setMode(this.type = IPMsgProtocol.IPMSG_RECVMSG);
                 break;
             default:
-                // FIXME Illegal message command.
-                break;
+                throw new IllegalArgumentException(StringUtil.format(
+                        "Message.Type setting failure.(actual:%s)", Integer.toHexString(type)));
         }
         this.type = type;
     }
     
     public int getType() {
         return this.type;
+    }
+    
+    public void setCheckMode(int checkMode) {
+        switch (checkMode) {
+            case CHECK_NONE:
+                command.removeOption(IPMsgProtocol.IPMSG_SENDCHECKOPT);
+                command.removeOption(IPMsgProtocol.IPMSG_READCHECKOPT);
+                break;
+            case CHECK_SEND:
+                command.addOption(IPMsgProtocol.IPMSG_SENDCHECKOPT);
+                break;
+            case CHECK_READ:
+                command.addOption(IPMsgProtocol.IPMSG_READCHECKOPT);
+                break;
+            default:
+                throw new IllegalArgumentException(StringUtil.format(
+                        "Message.CheckMode setting failure.(actual:%s)", Integer.toHexString(checkMode)));
+        }
+        this.checkMode = checkMode;
+    }
+    
+    public int getCheckMode() {
+        return checkMode;
     }
     
     public boolean isBroadcast() {
@@ -109,16 +118,6 @@ public class Message extends Packet {
     
     public void setSecretMessage(boolean isSecret) {
         command.addOrRemoveOpt(isSecret, IPMsgProtocol.IPMSG_SECRETOPT);
-    }
-    
-    @Override
-    public String getExtString() {
-        return extString;
-    }
-    
-    @Override
-    public void setExtString(String extString) {
-        this.extString = extString;
     }
     
 }

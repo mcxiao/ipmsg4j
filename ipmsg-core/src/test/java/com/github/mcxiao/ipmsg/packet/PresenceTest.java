@@ -2,7 +2,7 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.address.Address;
-import com.github.mcxiao.ipmsg.util.PacketParseUtil;
+import com.github.mcxiao.ipmsg.packet.extension.BareExtension;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,7 +24,7 @@ public class PresenceTest {
     HostSub hostSub = new HostSub(senderName, senderHost);
     String extString = "Hello World";
     
-    String result = "1:1000:senderName:senderHost:16777217:Hello World";
+    String result = "1:1000:senderName:senderHost:16777217:Hello World\0";
     
     private static void assertPresenceStatus(Presence presence) {
         Assert.assertEquals(Presence.TYPE_BR_ENTRY, presence.getType());
@@ -35,7 +35,7 @@ public class PresenceTest {
     @Test
     public void testPresenceParse() throws Exception {
         Presence presence = new Presence(version, packetNo, hostSub, command);
-        presence.setExtString(extString);
+        presence.setExtension(new BareExtension(extString));
         presence.setFrom(from);
         // Assert presence status
         assertPresenceStatus(presence);

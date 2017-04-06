@@ -17,11 +17,10 @@
 package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProperties;
+import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.util.PacketIdUtil;
-import com.github.mcxiao.ipmsg.util.PacketParseUtil;
-
-import java.nio.ByteBuffer;
+import com.github.mcxiao.ipmsg.util.StringUtil;
 
 /**
  */
@@ -31,7 +30,7 @@ public abstract class Packet implements Element {
     protected final String version;
     protected HostSub hostSub;
     protected Command command;
-    protected String extString;
+    protected ExtensionElement extension;
 
     protected Address to;
     protected Address from;
@@ -57,23 +56,13 @@ public abstract class Packet implements Element {
     }
     
     public byte[] toBytes() {
-        // XXX 避免多次 array copy
-        String bufString = String.format(PacketParseUtil.FORMATTER, version, packetNo,
-                hostSub.getSenderName(), hostSub.getSenderHost(), command.getCommand());
-        byte[] buf = bufString.getBytes();
-        byte[] commandElementBytes = extensionElementToBytes() == null ? new byte[0] : extensionElementToBytes();
-    
-        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + commandElementBytes.length);
-        byteBuffer.put(buf);
-        byteBuffer.put(commandElementBytes);
-        return byteBuffer.array();
-    }
-    
-    protected abstract byte[] extensionElementToBytes();
-    
-    @Override
-    public String toString() {
-        return new String(toBytes());
+        ExtensionElement extension = getExtension();
+        String extString = extension == null ? null : extension.toExtensionString();
+        
+        String bufString = StringUtil.format(PacketParseUtil.FORMATTER, version, packetNo,
+                hostSub.getSenderName(), hostSub.getSenderHost(), command.getCommand(), extString);
+        
+        return bufString.getBytes();
     }
     
     public String getPacketNo() {
@@ -100,12 +89,13 @@ public abstract class Packet implements Element {
         this.command = command;
     }
     
-    protected String getExtString() {
-        return extString;
+    @SuppressWarnings("unchecked")
+    public <EE extends ExtensionElement> EE getExtension() {
+        return (EE) extension;
     }
     
-    protected void setExtString(String extString) {
-        this.extString = extString;
+    protected void setExtension(ExtensionElement extension) {
+        this.extension = extension;
     }
     
     public Address getTo() {
@@ -124,18 +114,12 @@ public abstract class Packet implements Element {
         this.from = from;
     }
     
-//    public static Packet createByConnection(IPMsgConnection connection,
-//                                            String packetNo, Command command) {
-//        return createByConnection(connection, packetNo, command, null);
-//    }
-//
-//    public static Packet createByConnection(IPMsgConnection connection,
-//                                            String packetNo, Command command, byte[] msgBuf) {
-//        return new Packet(connection.getVersion(), packetNo, command, connection.getHostSub(), msgBuf);
-//    }
-
+    @Override
+    public String toString() {
+        return new String(toBytes());
+    }
+    
     public static String generatePacketNo() {
         return PacketIdUtil.newPacketId();
     }
-
 }

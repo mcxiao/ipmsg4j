@@ -2,9 +2,12 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.address.Address;
-import com.github.mcxiao.ipmsg.util.PacketParseUtil;
+import com.github.mcxiao.ipmsg.packet.extension.BareExtension;
+import com.github.mcxiao.ipmsg.packet.extension.BareExtensionProvider;
+import com.github.mcxiao.ipmsg.provider.ProviderManager;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -24,7 +27,12 @@ public class MessageTest {
     HostSub hostSub = new HostSub(senderName, senderHost);
     String extString = "Hello World";
     
-    String result = "1:1001:senderName:senderHost:8388640:Hello World";
+    String result = "1:1001:senderName:senderHost:8388640:Hello World\0";
+    
+    @Before
+    public void setup() {
+        ProviderManager.addExtensionProvider(new Command(0x20), new BareExtensionProvider());
+    }
     
     private static void assertMessageStatus(Message message) {
         Assert.assertEquals(Message.TYPE_SEND_MSG, message.getType());
@@ -35,8 +43,8 @@ public class MessageTest {
     @Test
     public void testMessageParse() throws Exception {
         Message message = new Message(version, packetNo, hostSub, command);
-        message.setExtString(extString);
         message.setFrom(from);
+        message.setExtension(new BareExtension(extString));
         // Assert message status
         assertMessageStatus(message);
         
