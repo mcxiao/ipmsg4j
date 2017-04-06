@@ -88,6 +88,6 @@ public class Command {
     
     @Override
     public int hashCode() {
-        return command;
+        return 31 * command;
     }
 }
