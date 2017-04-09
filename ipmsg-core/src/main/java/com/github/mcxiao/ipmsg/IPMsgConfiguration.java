@@ -28,6 +28,9 @@ public final class IPMsgConfiguration {
 
     private String senderName;
     private String senderHost;
+    
+    private String nickName;
+    private String groupName;
 
     public String getLocalHost() {
         return localHost;
@@ -57,6 +60,14 @@ public final class IPMsgConfiguration {
         return senderHost;
     }
     
+    public String getNickName() {
+        return nickName;
+    }
+    
+    public String getGroupName() {
+        return groupName;
+    }
+    
     public static class Builder {
     
         private String localHost;
@@ -67,6 +78,9 @@ public final class IPMsgConfiguration {
     
         private String senderName;
         private String senderHost;
+        
+        private String nickName;
+        private String groupName;
         
         public Builder() {
             initDefaultValue();
@@ -91,6 +105,8 @@ public final class IPMsgConfiguration {
             configuration.supportUtf8 = supportUtf8;
             configuration.senderName = senderName;
             configuration.senderHost = senderHost;
+            configuration.nickName = nickName;
+            configuration.groupName = groupName;
             
             return configuration;
         }
@@ -156,6 +172,24 @@ public final class IPMsgConfiguration {
         public Builder setSenderHost(String senderHost) {
             this.senderHost = senderHost;
             return IPMsgConfiguration.Builder.this;
+        }
+    
+        public String getNickName() {
+            return nickName;
+        }
+    
+        public Builder setNickName(String nickName) {
+            this.nickName = nickName;
+            return Builder.this;
+        }
+    
+        public String getGroupName() {
+            return groupName;
+        }
+    
+        public Builder setGroupName(String groupName) {
+            this.groupName = groupName;
+            return Builder.this;
         }
     }
     

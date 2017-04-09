@@ -71,4 +71,9 @@ public final class Presence extends Packet {
     public boolean isAbsence() {
         return command.acceptOpt(IPMsgProtocol.IPMSG_ABSENCEOPT);
     }
+    
+    @Override
+    public void setExtension(ExtensionElement extension) {
+        super.setExtension(extension);
+    }
 }

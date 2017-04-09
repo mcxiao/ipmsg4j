@@ -16,10 +16,9 @@ public final class ExtensionParseUtil {
         return src.split("\\b:\\b");
     }
     
-    public static String escapeDelimiter(@NotNull String src, boolean encode) {
-        Objects.requireNonNull(src, "Params can't be null.");
+    public static String escapeDelimiter(String src, boolean encode) {
      
-        return encode ? src.replace(":", "::") : src.replace("::", ":");
+        return src == null ? null : encode ? src.replace(":", "::") : src.replace("::", ":");
     }
     
 }

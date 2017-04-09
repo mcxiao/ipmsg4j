@@ -40,8 +40,10 @@ public class ExtensionStringBuilder {
         return this;
     }
     
-    public ExtensionStringBuilder formatAppendIfAble(String regex, Object... value) {
-        stringBuilder.append(StringUtil.format(regex, value));
+    public ExtensionStringBuilder formatAppendIfAble(String regex, String value) {
+        if (!StringUtil.isNullOrEmpty(value)) {
+            stringBuilder.append(StringUtil.format(regex, value));
+        }
         return this;
     }
     

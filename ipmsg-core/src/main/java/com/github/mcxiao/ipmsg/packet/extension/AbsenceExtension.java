@@ -2,6 +2,7 @@ package com.github.mcxiao.ipmsg.packet.extension;
 
 import com.github.mcxiao.ipmsg.packet.PacketExtension;
 import com.github.mcxiao.ipmsg.util.ExtensionStringBuilder;
+import com.github.mcxiao.ipmsg.util.StringUtil;
 
 /**
  *
@@ -90,7 +91,10 @@ public class AbsenceExtension extends PacketExtension {
         builder.append("\0\n");
         builder.formatAppendIfAble("UN:%s\n", encodedUserName);
         builder.formatAppendIfAble("HN:%s\n", encodedHostName);
-        builder.formatAppendIfAble("NN:%s[%s]\n", encodedNickName, encodedAbsenceStatus);
+        if (!StringUtil.isNullOrEmpty(encodedNickName)) {
+            builder.formatAppendIfAble("NN:%s", encodedNickName);
+            builder.formatAppendIfAble("[%s]\n", encodedAbsenceStatus);
+        }
         builder.formatAppendIfAble("GN:%s\n", encodedGroupName);
     
         builder.appendTheEND();

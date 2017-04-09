@@ -25,6 +25,7 @@ import com.github.mcxiao.ipmsg.packet.HostSub;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.packet.PacketParseUtil;
 import com.github.mcxiao.ipmsg.packet.Presence;
+import com.github.mcxiao.ipmsg.packet.extension.AbsenceExtension;
 import com.github.mcxiao.ipmsg.packet.extension.PresenceExtensionProvider;
 import com.github.mcxiao.ipmsg.provider.ProviderManager;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
@@ -283,6 +284,11 @@ public abstract class AbstractConnection implements IPMsgConnection {
             presence.setTo(new BroadcastAddress(getPort()));
             presence.setSupportUtf8(isSupportUtf8());
             presence.setSupportFileAttach(isSupportFileAttach());
+            
+            AbsenceExtension extension = new AbsenceExtension(config.getSenderName(), config.getSenderHost(),
+                    config.getNickName(), null, config.getGroupName());
+            presence.setExtension(extension);
+            
             sendPacket(presence);
         }
     }
