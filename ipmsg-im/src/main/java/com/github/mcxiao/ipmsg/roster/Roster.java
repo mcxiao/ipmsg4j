@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  */
-public class Roster extends Manager {
+public final class Roster extends Manager {
 
     private final static String TAG = LogUtil.createTag(Roster.class.getSimpleName(), null);
     
@@ -117,6 +117,13 @@ public class Roster extends Manager {
         return loaded;
     }
 
+    public RosterEntry getEntry(Address address) {
+        if (address == null) {
+            return null;
+        }
+        return entries.get(address);
+    }
+    
     public Set<RosterEntry> getEntries() {
         Set<RosterEntry> invokeEntries;
         synchronized (rosterListenersAndEntriesLock) {
@@ -165,11 +172,11 @@ public class Roster extends Manager {
         }
     }
 
-    private RosterEntry buildRosterEntryByPacket(Packet packet) {
-        RosterEntry entry = new RosterEntry(packet.getHostSub(), packet.getFrom());
-        Command command = packet.getCommand();
-        entry.setSupportFileAttach(command.acceptOpt(IPMsgProtocol.IPMSG_FILEATTACHOPT));
-        entry.setSupportUtf8(command.acceptOpt(IPMsgProtocol.IPMSG_CAPUTF8OPT));
+    private RosterEntry buildRosterEntryByPacket(Presence presence) {
+        RosterEntry entry = new RosterEntry(presence.getHostSub(), presence.getFrom());
+        entry.setSupportFileAttach(presence.isSupportFileAttach());
+        entry.setSupportUtf8(presence.isSupportUtf8());
+        entry.setStatus(presence.isAbsence() ? RosterEntry.STATUS_ABSENCE : RosterEntry.STATUS_NORMAL);
 
         return entry;
     }
@@ -177,9 +184,9 @@ public class Roster extends Manager {
     /**
      * @return If true when already added roster entry packet.
      */
-    private boolean addOrUpdateEntry(Packet packet) {
-        Address from = packet.getFrom();
-        RosterEntry entry = buildRosterEntryByPacket(packet);
+    private boolean addOrUpdateEntry(Presence presence) {
+        Address from = presence.getFrom();
+        RosterEntry entry = buildRosterEntryByPacket(presence);
 
         synchronized (rosterListenersAndEntriesLock) {
             if (entries.get(from) != null) {
@@ -197,7 +204,7 @@ public class Roster extends Manager {
                                   @Nullable String extString)
             throws NotConnectedException, InterruptedException, ClientUnavailableException {
         Presence presence = buildPresence(type, to);
-        presence.setExtString(extString);
+//        presence.setExtString(extString);
         
         connection().sendPacket(presence);
     }
@@ -247,7 +254,7 @@ public class Roster extends Manager {
                     }
                     break;
                 case IPMsgProtocol.IPMSG_BR_ABSENCE:
-
+                    
                     break;
                 case IPMsgProtocol.IPMSG_BR_EXIT:
                     deletedEntry = presence.getFrom();

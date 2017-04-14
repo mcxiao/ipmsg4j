@@ -23,11 +23,18 @@ import com.sun.istack.internal.Nullable;
 /**
  */
 public class RosterEntry {
+    
+    public final static int STATUS_NORMAL = 0;
+    public final static int STATUS_ABSENCE = 1;
 
     private HostSub hostSub;
 
     private Address address;
 
+    private int status = STATUS_NORMAL;
+    
+    private String statusSummary;
+    
     private boolean supportUtf8;
 
     private boolean supportFileAttach;
@@ -65,5 +72,21 @@ public class RosterEntry {
 
     protected void setSupportFileAttach(boolean supportFileAttach) {
         this.supportFileAttach = supportFileAttach;
+    }
+    
+    public int getStatus() {
+        return status;
+    }
+    
+    protected void setStatus(int status) {
+        this.status = status;
+    }
+    
+    public String getStatusSummary() {
+        return statusSummary;
+    }
+    
+    protected void setStatusSummary(String statusSummary) {
+        this.statusSummary = statusSummary;
     }
 }

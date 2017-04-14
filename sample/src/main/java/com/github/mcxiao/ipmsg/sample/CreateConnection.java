@@ -8,6 +8,7 @@ import com.github.mcxiao.ipmsg.IPMsgConnectionImpl;
 import com.github.mcxiao.ipmsg.IPMsgException;
 import com.github.mcxiao.ipmsg.address.Address;
 import com.github.mcxiao.ipmsg.roster.Roster;
+import com.github.mcxiao.ipmsg.roster.RosterEntry;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -22,7 +23,8 @@ public class CreateConnection {
         
         InetAddress localHost = InetAddress.getLocalHost();
         IPMsgConfiguration config = new IPMsgConfiguration.Builder()
-                .setLocalHost(localHost.getHostAddress()).build();
+                .setLocalHost(localHost.getHostAddress())
+                .setNickName("Frank").build();
     
         AbstractConnection connection = new IPMsgConnectionImpl(config);
         connection.addConnectionListener(new AbstractConnectionListener(){
@@ -42,28 +44,17 @@ public class CreateConnection {
             }
         });
     
+        
         Roster roster = Roster.getInstanceFor(connection);
         roster.addRosterListener(new AbstractRosterListener(){
             @Override
             public void addEntry(Address address) {
-                System.out.printf("Somebody online -> %s \n", address.getAddress());
+                RosterEntry entry = roster.getEntry(address);
+                System.out.printf("Somebody online -> %s:%s \n", entry.getName(), entry.getAddress());
             }
         });
         
         connection.connect();
-        
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(5 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                
-                done();
-            }
-        }).start();
         
         waitWhenNotDone();
         
