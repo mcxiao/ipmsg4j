@@ -26,7 +26,7 @@ import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.packet.PacketParseUtil;
 import com.github.mcxiao.ipmsg.packet.Presence;
 import com.github.mcxiao.ipmsg.packet.extension.AbsenceExtension;
-import com.github.mcxiao.ipmsg.packet.extension.OriginExtensionProvider;
+import com.github.mcxiao.ipmsg.packet.extension.MessageBodyExtensionProvider;
 import com.github.mcxiao.ipmsg.packet.extension.PresenceExtensionProvider;
 import com.github.mcxiao.ipmsg.provider.ProviderManager;
 import com.github.mcxiao.ipmsg.util.IPMsgThreadFactory;
@@ -118,7 +118,7 @@ public abstract class AbstractConnection implements IPMsgConnection {
         ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_BR_ENTRY), presenceExtensionProvider);
         ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_ANSENTRY), presenceExtensionProvider);
     
-        OriginExtensionProvider originExtensionProvider = new OriginExtensionProvider();
+        MessageBodyExtensionProvider originExtensionProvider = new MessageBodyExtensionProvider();
         ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_SENDMSG), originExtensionProvider);
         ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_RECVMSG), originExtensionProvider);
         ProviderManager.addExtensionProvider(new Command(IPMsgProtocol.IPMSG_READMSG), originExtensionProvider);

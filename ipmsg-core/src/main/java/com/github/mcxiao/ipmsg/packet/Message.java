@@ -2,6 +2,8 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.filter.MessageFilter;
+import com.github.mcxiao.ipmsg.packet.extension.MessageBodyExtension;
+import com.github.mcxiao.ipmsg.packet.extension.OriginExtension;
 import com.github.mcxiao.ipmsg.util.StringUtil;
 
 /**
@@ -34,10 +36,21 @@ public class Message extends Packet {
         setType(type);
     }
     
+    public Message(int type, String body) {
+        super();
+        setType(type);
+        setExtension(new OriginExtension(body));
+    }
+    
     public Message(int type, int checkMode) {
+        this(type, checkMode, null);
+    }
+    
+    public Message(int type, int checkMode, String body) {
         super();
         setType(type);
         setCheckMode(checkMode);
+        setExtension(new OriginExtension(body));
     }
     
     public Message(String version, String packetNo, HostSub hostSub, Command command) {
@@ -59,6 +72,11 @@ public class Message extends Packet {
                         "Message.Type setting failure.(actual:%s)", Integer.toHexString(type)));
         }
         this.type = type;
+    }
+    
+    @Override
+    public MessageBodyExtension getExtension() {
+        return super.getExtension();
     }
     
     public int getType() {
@@ -118,6 +136,20 @@ public class Message extends Packet {
     
     public void setSecretMessage(boolean isSecret) {
         command.addOrRemoveOpt(isSecret, IPMsgProtocol.IPMSG_SECRETOPT);
+    }
+    
+    public String getBody() {
+        MessageBodyExtension extension = getExtension();
+        return extension == null ? null : extension.toExtensionString();
+    }
+    
+    public void setBody(String body) {
+        MessageBodyExtension extension = getExtension();
+        if (extension == null) {
+            setExtension(new MessageBodyExtension(body));
+        } else {
+            extension.setExtString(body);
+        }
     }
     
 }
