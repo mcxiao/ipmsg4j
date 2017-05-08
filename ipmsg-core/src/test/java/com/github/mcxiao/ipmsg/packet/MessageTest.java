@@ -2,8 +2,8 @@ package com.github.mcxiao.ipmsg.packet;
 
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.address.Address;
-import com.github.mcxiao.ipmsg.packet.extension.BareExtension;
-import com.github.mcxiao.ipmsg.packet.extension.BareExtensionProvider;
+import com.github.mcxiao.ipmsg.packet.extension.MessageBodyExtension;
+import com.github.mcxiao.ipmsg.packet.extension.MessageBodyExtensionProvider;
 import com.github.mcxiao.ipmsg.provider.ProviderManager;
 
 import org.junit.Assert;
@@ -25,26 +25,27 @@ public class MessageTest {
     String senderName = "senderName";
     String senderHost = "senderHost";
     HostSub hostSub = new HostSub(senderName, senderHost);
-    String extString = "Hello World";
+    static String extString = "Hello World";
     
     String result = "1:1001:senderName:senderHost:8388640:Hello World\0";
     
     @Before
     public void setup() {
-        ProviderManager.addExtensionProvider(new Command(0x20), new BareExtensionProvider());
+        ProviderManager.addExtensionProvider(new Command(0x20), new MessageBodyExtensionProvider());
     }
     
     private static void assertMessageStatus(Message message) {
         Assert.assertEquals(Message.TYPE_SEND_MSG, message.getType());
         Assert.assertEquals(true, message.isUtf8Codec());
         Assert.assertEquals(false, message.isBroadcast());
+        Assert.assertEquals(extString, message.getExtension().getExtString());
     }
     
     @Test
     public void testMessageParse() throws Exception {
         Message message = new Message(version, packetNo, hostSub, command);
         message.setFrom(from);
-        message.setExtension(new BareExtension(extString));
+        message.setExtension(new MessageBodyExtension(extString));
         // Assert message status
         assertMessageStatus(message);
         

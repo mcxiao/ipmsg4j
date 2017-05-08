@@ -3,7 +3,6 @@ package com.github.mcxiao.ipmsg.packet;
 import com.github.mcxiao.ipmsg.IPMsgProtocol;
 import com.github.mcxiao.ipmsg.filter.MessageFilter;
 import com.github.mcxiao.ipmsg.packet.extension.MessageBodyExtension;
-import com.github.mcxiao.ipmsg.packet.extension.OriginExtension;
 import com.github.mcxiao.ipmsg.util.StringUtil;
 
 /**
@@ -39,7 +38,7 @@ public class Message extends Packet {
     public Message(int type, String body) {
         super();
         setType(type);
-        setExtension(new OriginExtension(body));
+        setExtension(new MessageBodyExtension(body));
     }
     
     public Message(int type, int checkMode) {
@@ -50,7 +49,7 @@ public class Message extends Packet {
         super();
         setType(type);
         setCheckMode(checkMode);
-        setExtension(new OriginExtension(body));
+        setExtension(new MessageBodyExtension(body));
     }
     
     public Message(String version, String packetNo, HostSub hostSub, Command command) {

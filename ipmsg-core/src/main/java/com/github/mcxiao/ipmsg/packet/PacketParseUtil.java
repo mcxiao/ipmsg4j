@@ -140,7 +140,11 @@ public final class PacketParseUtil {
     
     public static ExtensionElement parseExtensionElement(Command command, String extString) throws Exception {
         ExtensionElementProvider<? extends ExtensionElement> extensionProvider = ProviderManager.getExtensionProvider(new Command(command.getMode()));
-        return extensionProvider.parse(command, extString);
+        
+        if (extensionProvider != null) {
+            return extensionProvider.parse(command, extString);
+        }
+        return null;
     }
 
 }

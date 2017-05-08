@@ -288,9 +288,10 @@ public abstract class AbstractConnection implements IPMsgConnection {
      */
     protected void afterSuccessfulConnect(boolean resumed) throws NotConnectedException, InterruptedException, ClientUnavailableException {
         connected = true;
-        notifyConnectionConnected();
         
         if (!resumed) {
+            notifyConnectionConnected();
+            
             Presence presence = new Presence(Presence.TYPE_BR_ENTRY);
             presence.setTo(new BroadcastAddress(getPort()));
             presence.setSupportUtf8(isSupportUtf8());
@@ -301,6 +302,8 @@ public abstract class AbstractConnection implements IPMsgConnection {
             presence.setExtension(extension);
             
             sendPacket(presence);
+        } else {
+            // TODO notify connection resumed.(reconnect success)
         }
     }
 
