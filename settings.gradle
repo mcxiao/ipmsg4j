@@ -1,4 +1,4 @@
 rootProject.name = 'IPMsg4J'
 include 'ipmsg-core'
 include 'ipmsg-im'
-include ':sample'
+include ':sample', ':dev'
