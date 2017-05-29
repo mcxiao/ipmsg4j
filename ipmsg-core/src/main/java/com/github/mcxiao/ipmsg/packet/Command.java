@@ -61,11 +61,11 @@ public class Command {
     }
 
     public boolean acceptMode(int mode) {
-        return IPMsgProtocol.ACCEPT_MODE(command, mode);
+        return IPMsgProtocol.ACCEPT_MODE(command, IPMsgProtocol.GET_MODE(mode));
     }
 
     public boolean acceptOpt(int opt) {
-        return IPMsgProtocol.ACCEPT_OPT(command, opt);
+        return IPMsgProtocol.ACCEPT_OPT(command, IPMsgProtocol.GET_OPT(opt));
     }
     
     public int addOrRemoveOpt(boolean boo, int opt) {
