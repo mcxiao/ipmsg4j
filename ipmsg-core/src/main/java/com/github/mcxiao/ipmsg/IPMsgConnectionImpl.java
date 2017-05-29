@@ -24,11 +24,16 @@ import com.github.mcxiao.ipmsg.address.IPAddressCache;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.util.LogUtil;
 import com.github.mcxiao.ipmsg.util.StringUtil;
+
 import org.jivesoftware.smack.util.ArrayBlockingQueueWithShutdown;
 import org.jivesoftware.smack.util.Async;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 /**
  */
@@ -39,8 +44,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
     private IPMsgConfiguration config;
 
-    private DatagramSocket readerSocket;
-    private DatagramSocket writerSocket;
+    private DatagramSocket datagramSocket;
 
     private DatagramPacketReader datagramReader;
     private DatagramPacketWriter datagramWriter;
@@ -87,10 +91,8 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     private void connectUsingConfiguration() throws IPMsgException.ConnectException {
         try {
             // XXX: 2017/3/7 Is there both setBroadcast(true)?
-            readerSocket = new DatagramSocket(getPort());
-            readerSocket.setBroadcast(true);
-            writerSocket = new DatagramSocket();
-            writerSocket.setBroadcast(true);
+            datagramSocket = new DatagramSocket(getPort());
+            datagramSocket.setBroadcast(true);
         } catch (SocketException e) {
             throw new IPMsgException.ConnectException("Can't create DatagramSocket.", e);
         }
@@ -121,13 +123,10 @@ public class IPMsgConnectionImpl extends AbstractConnection {
         }
         LogUtil.fine(TAG, "DatagramReader has been shutdown.", null);
     
-        if (writerSocket != null) {
-            writerSocket.close();
-        }
         LogUtil.fine(TAG, "WriterSocket has been shutdown.", null);
         
-        if (readerSocket != null) {
-            readerSocket.close();
+        if (datagramSocket != null) {
+            datagramSocket.close();
         }
         LogUtil.fine(TAG, "ReaderSocket has been shutdown.", null);
 
@@ -209,7 +208,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
                     // TODO: 2017/3/1 send exit command
                     try {
-                        writerSocket.close();
+                        datagramSocket.close();
                     } catch (Exception e) {
                         LogUtil.warn(TAG, "Exception during close DatagramWriter, ignored.", e);
                     }
@@ -239,7 +238,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
             DatagramPacket datagramPacket = new DatagramPacket(msgBuf, msgBuf.length,
                     to.getInetAddress(), to.getPort());
-            writerSocket.send(datagramPacket);
+            datagramSocket.send(datagramPacket);
         }
 
         void sendPacket(Packet packet) throws InterruptedException {
@@ -301,7 +300,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
                     byte[] bytes = new byte[bufferSize];
                     DatagramPacket datagramPacket = new DatagramPacket(bytes, bytes.length);
                     try {
-                        readerSocket.receive(datagramPacket);
+                        datagramSocket.receive(datagramPacket);
                     } catch (IOException e) {
                         if (!(done() || datagramWriter.queue.isShutdown())) {
                             throw new IPMsgException.ConnectException(
