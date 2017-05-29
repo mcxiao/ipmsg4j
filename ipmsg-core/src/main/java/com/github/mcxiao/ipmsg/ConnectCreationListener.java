@@ -20,6 +20,6 @@ package com.github.mcxiao.ipmsg;
  */
 public interface ConnectCreationListener {
 
-    void connectionCreated(IPMsgConnection connection);
+    void connectionCreated(AbstractConnection connection);
 
 }

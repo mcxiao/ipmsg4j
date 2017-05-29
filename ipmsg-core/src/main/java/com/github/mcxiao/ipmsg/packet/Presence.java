@@ -8,7 +8,7 @@ import com.github.mcxiao.ipmsg.filter.PresenceFilter;
  *
  */
 
-public final class Presence extends Packet {
+public class Presence extends Packet {
     
     public final static int TYPE_BR_ENTRY = IPMsgProtocol.IPMSG_BR_ENTRY;
     public final static int TYPE_BR_EXIT = IPMsgProtocol.IPMSG_BR_EXIT;

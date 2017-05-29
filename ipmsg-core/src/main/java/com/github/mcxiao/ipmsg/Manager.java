@@ -22,17 +22,17 @@ import java.lang.ref.WeakReference;
  */
 public abstract class Manager {
 
-    private final WeakReference<IPMsgConnection> weakConnection;
+    private final WeakReference<AbstractConnection> weakConnection;
 
-    public Manager(IPMsgConnection connection) {
+    public Manager(AbstractConnection connection) {
         if (connection == null) {
             throw new NullPointerException("Connection must not be null");
         }
 
-        weakConnection = new WeakReference<IPMsgConnection>(connection);
+        weakConnection = new WeakReference<>(connection);
     }
 
-    protected final IPMsgConnection connection() {
+    protected final AbstractConnection connection() {
         return weakConnection.get();
     }
 

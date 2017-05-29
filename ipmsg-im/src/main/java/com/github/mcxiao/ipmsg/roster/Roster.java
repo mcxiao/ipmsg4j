@@ -16,6 +16,7 @@
 
 package com.github.mcxiao.ipmsg.roster;
 
+import com.github.mcxiao.ipmsg.AbstractConnection;
 import com.github.mcxiao.ipmsg.AbstractConnectionListener;
 import com.github.mcxiao.ipmsg.ConnectCreationListener;
 import com.github.mcxiao.ipmsg.ConnectionRegistry;
@@ -28,9 +29,11 @@ import com.github.mcxiao.ipmsg.Manager;
 import com.github.mcxiao.ipmsg.PacketFilter;
 import com.github.mcxiao.ipmsg.PacketListener;
 import com.github.mcxiao.ipmsg.address.Address;
+import com.github.mcxiao.ipmsg.address.BroadcastAddress;
 import com.github.mcxiao.ipmsg.packet.Command;
 import com.github.mcxiao.ipmsg.packet.Packet;
 import com.github.mcxiao.ipmsg.packet.Presence;
+import com.github.mcxiao.ipmsg.roster.packet.RosterPacket;
 import com.github.mcxiao.ipmsg.util.LogUtil;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
@@ -51,7 +54,7 @@ public final class Roster extends Manager {
     static {
         ConnectionRegistry.addConnectionCreationListner(new ConnectCreationListener() {
             @Override
-            public void connectionCreated(IPMsgConnection connection) {
+            public void connectionCreated(AbstractConnection connection) {
                 getInstanceFor(connection);
             }
         });
@@ -80,7 +83,7 @@ public final class Roster extends Manager {
      */
     private final Map<Address, RosterEntry> entries = new ConcurrentHashMap<>();
 
-    public static Roster getInstanceFor(IPMsgConnection connection) {
+    public static Roster getInstanceFor(AbstractConnection connection) {
         Roster roster = INSTANCES.get(connection);
         if (roster == null) {
             roster = new Roster(connection);
@@ -89,7 +92,7 @@ public final class Roster extends Manager {
         return roster;
     }
     
-    private Roster(IPMsgConnection connection) {
+    private Roster(AbstractConnection connection) {
         super(connection);
 
         connection.addSyncPacketListener(presencePacketListener, PRESENCE_PACKET_FILTER);
@@ -97,7 +100,7 @@ public final class Roster extends Manager {
             @Override
             public void connected(IPMsgConnection connection) {
                 try {
-                    
+                    sendRosterPacket(Presence.TYPE_BR_ENTRY, new BroadcastAddress(connection.getPort()), null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -111,6 +114,16 @@ public final class Roster extends Manager {
     }
 
     public void reload() throws IPMsgException, InterruptedException {
+        RosterPacket packet = new RosterPacket(RosterPacket.TYPE_BR_ENTRY);
+        packet.setTo(new BroadcastAddress(connection().getPort()));
+        packet.setSupportUtf8(connection().isSupportUtf8());
+        packet.setSupportFileAttach(connection().isSupportFileAttach());
+    
+        packet.setUserName(connection().getSenderName());
+        packet.setUserHost(connection().getSenderHost());
+        // TODO support NickName and Group
+        
+        connection().sendPacket(packet);
     }
 
     public boolean isLoaded() {
