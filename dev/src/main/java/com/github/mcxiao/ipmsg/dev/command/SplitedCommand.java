@@ -21,6 +21,31 @@ public class SplitedCommand extends Command {
         return Integer.toBinaryString(getCommand());
     }
     
+    public String toReadableBinary() {
+        String string = toBinaryString();
+        int length = string.length();
+        int offset = length % 4;
+        
+        StringBuilder builder = new StringBuilder();
+        if (offset != 0) {
+            for (int i = 0; i < (4 - offset); i++) {
+                builder.append("0");
+            }
+            
+            builder.append(string.substring(0, offset));
+            builder.append(" ");
+        }
+        
+        while (offset < length) {
+            String substring = string.substring(offset, offset + 4);
+            builder.append(substring);
+            builder.append(" ");
+            offset += 4;
+        }
+        
+        return builder.toString();
+    }
+    
     public String appliedOpt() {
         StringBuilder builder = new StringBuilder();
         
@@ -55,7 +80,7 @@ public class SplitedCommand extends Command {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(toBinaryString());
+        builder.append(toReadableBinary());
         builder.append("\nMode:\n");
         builder.append(appliedMode());
         builder.append("\nOptions:\n");

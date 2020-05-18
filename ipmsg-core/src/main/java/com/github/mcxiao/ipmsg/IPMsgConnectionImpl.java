@@ -52,6 +52,9 @@ public class IPMsgConnectionImpl extends AbstractConnection {
     private SimpleSynchronizationPoint<Exception> initialSocketComplete =
             new SimpleSynchronizationPoint<>(IPMsgConnectionImpl.this, "initial socket complete");
     
+//    private SimpleSynchronizationPoint<Exception> closeSocketReceived =
+//            new SimpleSynchronizationPoint<>(IPMsgConnectionImpl.this, "close socket received");
+
     public IPMsgConnectionImpl(IPMsgConfiguration configuration) {
         super(configuration);
         this.config = configuration;
@@ -59,6 +62,7 @@ public class IPMsgConnectionImpl extends AbstractConnection {
 
     @Override
     protected void connectInternal() throws InterruptedException, IPMsgException {
+//        closeSocketReceived.init();
         
         // Initialize connection and setup the reader and writer.
         connectUsingConfiguration();
@@ -122,6 +126,12 @@ public class IPMsgConnectionImpl extends AbstractConnection {
             datagramReader.shutdown();
         }
         LogUtil.fine(TAG, "DatagramReader has been shutdown.", null);
+    
+//        try {
+//            closeSocketReceived.checkIfSuccessOrWait();
+//        } catch (NoResponseException | InterruptedException e) {
+//            LogUtil.warn(TAG, "Exception while waiting for close socket.", e);
+//        }
     
         LogUtil.fine(TAG, "WriterSocket has been shutdown.", null);
         
@@ -320,7 +330,9 @@ public class IPMsgConnectionImpl extends AbstractConnection {
                     }
                 }
                 
+//                closeSocketReceived.reportSuccess();
             } catch (Exception e) {
+//                closeSocketReceived.reportFailure(e);
                 
                 if (!(done() || datagramWriter.queue.isShutdown())) {
                     notifyConnectionClosedOnError(e);
